@@ -31,23 +31,19 @@ public:
     QVBoxLayout *verticalLayout_4;
     QSpacerItem *verticalSpacer_4;
     QLabel *labelThreatStatistics;
-    QSpacerItem *verticalSpacer;
     QVBoxLayout *verticalLayout_3;
     QHBoxLayout *horizontalLayout_8;
     QLabel *label_2;
     QSpacerItem *horizontalSpacer_7;
     QLabel *labelStatT1;
-    QSpacerItem *verticalSpacer_2;
     QHBoxLayout *horizontalLayout_9;
     QLabel *label_3;
     QSpacerItem *horizontalSpacer_6;
     QLabel *labelStatT2;
-    QSpacerItem *verticalSpacer_5;
     QHBoxLayout *horizontalLayout_10;
     QLabel *label_4;
     QSpacerItem *horizontalSpacer_5;
     QLabel *labelStatT3;
-    QSpacerItem *verticalSpacer_6;
     QHBoxLayout *horizontalLayout_11;
     QLabel *label_5;
     QSpacerItem *horizontalSpacer_4;
@@ -55,23 +51,40 @@ public:
     QSpacerItem *verticalSpacer_3;
     QFrame *line;
     QLabel *label;
-    QSpacerItem *verticalSpacer_9;
     QVBoxLayout *verticalLayout;
     QHBoxLayout *horizontalLayout_2;
     QLabel *labelDescriptionCodeFlow;
     QSpacerItem *horizontalSpacer;
     QLabel *labelCodeFlow;
-    QSpacerItem *verticalSpacer_8;
     QHBoxLayout *horizontalLayout;
     QLabel *labelDescriptionImplicitFlow;
     QSpacerItem *horizontalSpacer_2;
     QLabel *labelImplicitFlow;
-    QSpacerItem *verticalSpacer_10;
     QHBoxLayout *horizontalLayout_3;
     QLabel *labelDescriptionFlowUndetermined;
     QSpacerItem *horizontalSpacer_3;
     QLabel *labelFlowUndetermined;
-    QSpacerItem *verticalSpacer_7;
+    QSpacerItem *verticalSpacer;
+    QFrame *line_2;
+    QLabel *labelSdkStatistics;
+    QVBoxLayout *verticalLayout_2;
+    QHBoxLayout *horizontalLayout_5;
+    QLabel *labelUsingSdk;
+    QSpacerItem *horizontalSpacer_8;
+    QLabel *labelPercentSdk;
+    QHBoxLayout *horizontalLayout_6;
+    QLabel *labelSdkCode;
+    QSpacerItem *horizontalSpacer_9;
+    QLabel *labelPercentSdkCode;
+    QHBoxLayout *horizontalLayout_7;
+    QLabel *labelSdkImplicit;
+    QSpacerItem *horizontalSpacer_10;
+    QLabel *labelPercentSdkImplicit;
+    QHBoxLayout *horizontalLayout_4;
+    QLabel *labelSdkUndetermined;
+    QSpacerItem *horizontalSpacer_11;
+    QLabel *labelPercentSdkUndetermined;
+    QSpacerItem *verticalSpacer_2;
 
     void setupUi(QDialog *AnalyzationStatistics)
     {
@@ -102,10 +115,6 @@ public:
 
         verticalLayout_4->addWidget(labelThreatStatistics);
 
-        verticalSpacer = new QSpacerItem(20, 10, QSizePolicy::Minimum, QSizePolicy::Fixed);
-
-        verticalLayout_4->addItem(verticalSpacer);
-
         verticalLayout_3 = new QVBoxLayout();
         verticalLayout_3->setObjectName(QStringLiteral("verticalLayout_3"));
         horizontalLayout_8 = new QHBoxLayout();
@@ -113,18 +122,18 @@ public:
         label_2 = new QLabel(AnalyzationStatistics);
         label_2->setObjectName(QStringLiteral("label_2"));
         QFont font1;
-        font1.setPointSize(12);
+        font1.setPointSize(14);
         label_2->setFont(font1);
 
         horizontalLayout_8->addWidget(label_2);
 
-        horizontalSpacer_7 = new QSpacerItem(80, 20, QSizePolicy::Fixed, QSizePolicy::Minimum);
+        horizontalSpacer_7 = new QSpacerItem(93, 20, QSizePolicy::Fixed, QSizePolicy::Minimum);
 
         horizontalLayout_8->addItem(horizontalSpacer_7);
 
         labelStatT1 = new QLabel(AnalyzationStatistics);
         labelStatT1->setObjectName(QStringLiteral("labelStatT1"));
-        QSizePolicy sizePolicy1(QSizePolicy::MinimumExpanding, QSizePolicy::Preferred);
+        QSizePolicy sizePolicy1(QSizePolicy::MinimumExpanding, QSizePolicy::Fixed);
         sizePolicy1.setHorizontalStretch(0);
         sizePolicy1.setVerticalStretch(0);
         sizePolicy1.setHeightForWidth(labelStatT1->sizePolicy().hasHeightForWidth());
@@ -139,10 +148,6 @@ public:
 
         verticalLayout_3->addLayout(horizontalLayout_8);
 
-        verticalSpacer_2 = new QSpacerItem(20, 10, QSizePolicy::Minimum, QSizePolicy::Fixed);
-
-        verticalLayout_3->addItem(verticalSpacer_2);
-
         horizontalLayout_9 = new QHBoxLayout();
         horizontalLayout_9->setObjectName(QStringLiteral("horizontalLayout_9"));
         label_3 = new QLabel(AnalyzationStatistics);
@@ -151,7 +156,7 @@ public:
 
         horizontalLayout_9->addWidget(label_3);
 
-        horizontalSpacer_6 = new QSpacerItem(83, 20, QSizePolicy::Fixed, QSizePolicy::Minimum);
+        horizontalSpacer_6 = new QSpacerItem(98, 20, QSizePolicy::Fixed, QSizePolicy::Minimum);
 
         horizontalLayout_9->addItem(horizontalSpacer_6);
 
@@ -166,10 +171,6 @@ public:
 
         verticalLayout_3->addLayout(horizontalLayout_9);
 
-        verticalSpacer_5 = new QSpacerItem(20, 10, QSizePolicy::Minimum, QSizePolicy::Fixed);
-
-        verticalLayout_3->addItem(verticalSpacer_5);
-
         horizontalLayout_10 = new QHBoxLayout();
         horizontalLayout_10->setObjectName(QStringLiteral("horizontalLayout_10"));
         label_4 = new QLabel(AnalyzationStatistics);
@@ -178,7 +179,7 @@ public:
 
         horizontalLayout_10->addWidget(label_4);
 
-        horizontalSpacer_5 = new QSpacerItem(86, 20, QSizePolicy::Fixed, QSizePolicy::Minimum);
+        horizontalSpacer_5 = new QSpacerItem(100, 20, QSizePolicy::Fixed, QSizePolicy::Minimum);
 
         horizontalLayout_10->addItem(horizontalSpacer_5);
 
@@ -192,10 +193,6 @@ public:
 
 
         verticalLayout_3->addLayout(horizontalLayout_10);
-
-        verticalSpacer_6 = new QSpacerItem(20, 10, QSizePolicy::Minimum, QSizePolicy::Fixed);
-
-        verticalLayout_3->addItem(verticalSpacer_6);
 
         horizontalLayout_11 = new QHBoxLayout();
         horizontalLayout_11->setObjectName(QStringLiteral("horizontalLayout_11"));
@@ -223,7 +220,7 @@ public:
 
         verticalLayout_4->addLayout(verticalLayout_3);
 
-        verticalSpacer_3 = new QSpacerItem(20, 40, QSizePolicy::Minimum, QSizePolicy::Fixed);
+        verticalSpacer_3 = new QSpacerItem(20, 40, QSizePolicy::Minimum, QSizePolicy::Expanding);
 
         verticalLayout_4->addItem(verticalSpacer_3);
 
@@ -244,10 +241,6 @@ public:
 
         verticalLayout_4->addWidget(label);
 
-        verticalSpacer_9 = new QSpacerItem(20, 10, QSizePolicy::Minimum, QSizePolicy::Fixed);
-
-        verticalLayout_4->addItem(verticalSpacer_9);
-
         verticalLayout = new QVBoxLayout();
         verticalLayout->setObjectName(QStringLiteral("verticalLayout"));
         horizontalLayout_2 = new QHBoxLayout();
@@ -260,7 +253,7 @@ public:
         sizePolicy2.setHeightForWidth(labelDescriptionCodeFlow->sizePolicy().hasHeightForWidth());
         labelDescriptionCodeFlow->setSizePolicy(sizePolicy2);
         QFont font4;
-        font4.setPointSize(12);
+        font4.setPointSize(14);
         font4.setBold(false);
         font4.setWeight(50);
         labelDescriptionCodeFlow->setFont(font4);
@@ -273,16 +266,16 @@ public:
 
         labelCodeFlow = new QLabel(AnalyzationStatistics);
         labelCodeFlow->setObjectName(QStringLiteral("labelCodeFlow"));
-        labelCodeFlow->setFont(font1);
+        sizePolicy.setHeightForWidth(labelCodeFlow->sizePolicy().hasHeightForWidth());
+        labelCodeFlow->setSizePolicy(sizePolicy);
+        QFont font5;
+        font5.setPointSize(12);
+        labelCodeFlow->setFont(font5);
 
         horizontalLayout_2->addWidget(labelCodeFlow);
 
 
         verticalLayout->addLayout(horizontalLayout_2);
-
-        verticalSpacer_8 = new QSpacerItem(20, 10, QSizePolicy::Minimum, QSizePolicy::Fixed);
-
-        verticalLayout->addItem(verticalSpacer_8);
 
         horizontalLayout = new QHBoxLayout();
         horizontalLayout->setObjectName(QStringLiteral("horizontalLayout"));
@@ -294,25 +287,20 @@ public:
 
         horizontalLayout->addWidget(labelDescriptionImplicitFlow);
 
-        horizontalSpacer_2 = new QSpacerItem(100, 20, QSizePolicy::Fixed, QSizePolicy::Minimum);
+        horizontalSpacer_2 = new QSpacerItem(115, 20, QSizePolicy::Fixed, QSizePolicy::Minimum);
 
         horizontalLayout->addItem(horizontalSpacer_2);
 
         labelImplicitFlow = new QLabel(AnalyzationStatistics);
         labelImplicitFlow->setObjectName(QStringLiteral("labelImplicitFlow"));
-        labelImplicitFlow->setFont(font1);
+        sizePolicy.setHeightForWidth(labelImplicitFlow->sizePolicy().hasHeightForWidth());
+        labelImplicitFlow->setSizePolicy(sizePolicy);
+        labelImplicitFlow->setFont(font5);
 
         horizontalLayout->addWidget(labelImplicitFlow);
 
 
         verticalLayout->addLayout(horizontalLayout);
-
-
-        verticalLayout_4->addLayout(verticalLayout);
-
-        verticalSpacer_10 = new QSpacerItem(20, 10, QSizePolicy::Minimum, QSizePolicy::Fixed);
-
-        verticalLayout_4->addItem(verticalSpacer_10);
 
         horizontalLayout_3 = new QHBoxLayout();
         horizontalLayout_3->setObjectName(QStringLiteral("horizontalLayout_3"));
@@ -324,22 +312,149 @@ public:
 
         horizontalLayout_3->addWidget(labelDescriptionFlowUndetermined);
 
-        horizontalSpacer_3 = new QSpacerItem(95, 20, QSizePolicy::Fixed, QSizePolicy::Minimum);
+        horizontalSpacer_3 = new QSpacerItem(110, 20, QSizePolicy::Fixed, QSizePolicy::Minimum);
 
         horizontalLayout_3->addItem(horizontalSpacer_3);
 
         labelFlowUndetermined = new QLabel(AnalyzationStatistics);
         labelFlowUndetermined->setObjectName(QStringLiteral("labelFlowUndetermined"));
-        labelFlowUndetermined->setFont(font1);
+        sizePolicy.setHeightForWidth(labelFlowUndetermined->sizePolicy().hasHeightForWidth());
+        labelFlowUndetermined->setSizePolicy(sizePolicy);
+        labelFlowUndetermined->setFont(font5);
 
         horizontalLayout_3->addWidget(labelFlowUndetermined);
 
 
-        verticalLayout_4->addLayout(horizontalLayout_3);
+        verticalLayout->addLayout(horizontalLayout_3);
 
-        verticalSpacer_7 = new QSpacerItem(20, 40, QSizePolicy::Minimum, QSizePolicy::Expanding);
 
-        verticalLayout_4->addItem(verticalSpacer_7);
+        verticalLayout_4->addLayout(verticalLayout);
+
+        verticalSpacer = new QSpacerItem(20, 40, QSizePolicy::Minimum, QSizePolicy::Expanding);
+
+        verticalLayout_4->addItem(verticalSpacer);
+
+        line_2 = new QFrame(AnalyzationStatistics);
+        line_2->setObjectName(QStringLiteral("line_2"));
+        line_2->setFrameShape(QFrame::HLine);
+        line_2->setFrameShadow(QFrame::Sunken);
+
+        verticalLayout_4->addWidget(line_2);
+
+        labelSdkStatistics = new QLabel(AnalyzationStatistics);
+        labelSdkStatistics->setObjectName(QStringLiteral("labelSdkStatistics"));
+        labelSdkStatistics->setFont(font3);
+
+        verticalLayout_4->addWidget(labelSdkStatistics);
+
+        verticalLayout_2 = new QVBoxLayout();
+        verticalLayout_2->setObjectName(QStringLiteral("verticalLayout_2"));
+        horizontalLayout_5 = new QHBoxLayout();
+        horizontalLayout_5->setObjectName(QStringLiteral("horizontalLayout_5"));
+        labelUsingSdk = new QLabel(AnalyzationStatistics);
+        labelUsingSdk->setObjectName(QStringLiteral("labelUsingSdk"));
+        sizePolicy2.setHeightForWidth(labelUsingSdk->sizePolicy().hasHeightForWidth());
+        labelUsingSdk->setSizePolicy(sizePolicy2);
+        labelUsingSdk->setFont(font1);
+
+        horizontalLayout_5->addWidget(labelUsingSdk);
+
+        horizontalSpacer_8 = new QSpacerItem(120, 20, QSizePolicy::Fixed, QSizePolicy::Minimum);
+
+        horizontalLayout_5->addItem(horizontalSpacer_8);
+
+        labelPercentSdk = new QLabel(AnalyzationStatistics);
+        labelPercentSdk->setObjectName(QStringLiteral("labelPercentSdk"));
+        sizePolicy.setHeightForWidth(labelPercentSdk->sizePolicy().hasHeightForWidth());
+        labelPercentSdk->setSizePolicy(sizePolicy);
+        labelPercentSdk->setFont(font5);
+
+        horizontalLayout_5->addWidget(labelPercentSdk);
+
+
+        verticalLayout_2->addLayout(horizontalLayout_5);
+
+        horizontalLayout_6 = new QHBoxLayout();
+        horizontalLayout_6->setObjectName(QStringLiteral("horizontalLayout_6"));
+        labelSdkCode = new QLabel(AnalyzationStatistics);
+        labelSdkCode->setObjectName(QStringLiteral("labelSdkCode"));
+        sizePolicy2.setHeightForWidth(labelSdkCode->sizePolicy().hasHeightForWidth());
+        labelSdkCode->setSizePolicy(sizePolicy2);
+        labelSdkCode->setFont(font1);
+
+        horizontalLayout_6->addWidget(labelSdkCode);
+
+        horizontalSpacer_9 = new QSpacerItem(30, 20, QSizePolicy::Fixed, QSizePolicy::Minimum);
+
+        horizontalLayout_6->addItem(horizontalSpacer_9);
+
+        labelPercentSdkCode = new QLabel(AnalyzationStatistics);
+        labelPercentSdkCode->setObjectName(QStringLiteral("labelPercentSdkCode"));
+        sizePolicy.setHeightForWidth(labelPercentSdkCode->sizePolicy().hasHeightForWidth());
+        labelPercentSdkCode->setSizePolicy(sizePolicy);
+        labelPercentSdkCode->setFont(font5);
+
+        horizontalLayout_6->addWidget(labelPercentSdkCode);
+
+
+        verticalLayout_2->addLayout(horizontalLayout_6);
+
+        horizontalLayout_7 = new QHBoxLayout();
+        horizontalLayout_7->setObjectName(QStringLiteral("horizontalLayout_7"));
+        labelSdkImplicit = new QLabel(AnalyzationStatistics);
+        labelSdkImplicit->setObjectName(QStringLiteral("labelSdkImplicit"));
+        sizePolicy2.setHeightForWidth(labelSdkImplicit->sizePolicy().hasHeightForWidth());
+        labelSdkImplicit->setSizePolicy(sizePolicy2);
+        labelSdkImplicit->setFont(font1);
+
+        horizontalLayout_7->addWidget(labelSdkImplicit);
+
+        horizontalSpacer_10 = new QSpacerItem(10, 20, QSizePolicy::Fixed, QSizePolicy::Minimum);
+
+        horizontalLayout_7->addItem(horizontalSpacer_10);
+
+        labelPercentSdkImplicit = new QLabel(AnalyzationStatistics);
+        labelPercentSdkImplicit->setObjectName(QStringLiteral("labelPercentSdkImplicit"));
+        sizePolicy.setHeightForWidth(labelPercentSdkImplicit->sizePolicy().hasHeightForWidth());
+        labelPercentSdkImplicit->setSizePolicy(sizePolicy);
+        labelPercentSdkImplicit->setFont(font5);
+
+        horizontalLayout_7->addWidget(labelPercentSdkImplicit);
+
+
+        verticalLayout_2->addLayout(horizontalLayout_7);
+
+        horizontalLayout_4 = new QHBoxLayout();
+        horizontalLayout_4->setObjectName(QStringLiteral("horizontalLayout_4"));
+        labelSdkUndetermined = new QLabel(AnalyzationStatistics);
+        labelSdkUndetermined->setObjectName(QStringLiteral("labelSdkUndetermined"));
+        sizePolicy2.setHeightForWidth(labelSdkUndetermined->sizePolicy().hasHeightForWidth());
+        labelSdkUndetermined->setSizePolicy(sizePolicy2);
+        labelSdkUndetermined->setFont(font1);
+
+        horizontalLayout_4->addWidget(labelSdkUndetermined);
+
+        horizontalSpacer_11 = new QSpacerItem(90, 20, QSizePolicy::Fixed, QSizePolicy::Minimum);
+
+        horizontalLayout_4->addItem(horizontalSpacer_11);
+
+        labelPercentSdkUndetermined = new QLabel(AnalyzationStatistics);
+        labelPercentSdkUndetermined->setObjectName(QStringLiteral("labelPercentSdkUndetermined"));
+        sizePolicy.setHeightForWidth(labelPercentSdkUndetermined->sizePolicy().hasHeightForWidth());
+        labelPercentSdkUndetermined->setSizePolicy(sizePolicy);
+        labelPercentSdkUndetermined->setFont(font5);
+
+        horizontalLayout_4->addWidget(labelPercentSdkUndetermined);
+
+
+        verticalLayout_2->addLayout(horizontalLayout_4);
+
+
+        verticalLayout_4->addLayout(verticalLayout_2);
+
+        verticalSpacer_2 = new QSpacerItem(20, 40, QSizePolicy::Minimum, QSizePolicy::Expanding);
+
+        verticalLayout_4->addItem(verticalSpacer_2);
 
 
         gridLayout->addLayout(verticalLayout_4, 0, 0, 1, 1);
@@ -369,6 +484,15 @@ public:
         labelImplicitFlow->setText(QString());
         labelDescriptionFlowUndetermined->setText(QApplication::translate("AnalyzationStatistics", "Undetermined:", 0));
         labelFlowUndetermined->setText(QString());
+        labelSdkStatistics->setText(QApplication::translate("AnalyzationStatistics", "SDK Statistics", 0));
+        labelUsingSdk->setText(QApplication::translate("AnalyzationStatistics", "Using SDK:", 0));
+        labelPercentSdk->setText(QString());
+        labelSdkCode->setText(QApplication::translate("AnalyzationStatistics", "SDK with Code Grant:", 0));
+        labelPercentSdkCode->setText(QString());
+        labelSdkImplicit->setText(QApplication::translate("AnalyzationStatistics", "SDK with Implicit Grant:", 0));
+        labelPercentSdkImplicit->setText(QString());
+        labelSdkUndetermined->setText(QApplication::translate("AnalyzationStatistics", "Undetermined", 0));
+        labelPercentSdkUndetermined->setText(QString());
     } // retranslateUi
 
 };

@@ -40,6 +40,10 @@ public:
     QLabel *labelDescriptionFlow;
     QSpacerItem *horizontalSpacer_2;
     QLabel *labelFlow;
+    QHBoxLayout *horizontalLayout_2;
+    QLabel *labelDescriptionSdk;
+    QSpacerItem *horizontalSpacer_3;
+    QLabel *labelSdkUsed;
     QSpacerItem *verticalSpacer;
     QFrame *line;
     QSpacerItem *verticalSpacer_3;
@@ -134,6 +138,31 @@ public:
 
         verticalLayout->addLayout(horizontalLayout);
 
+        horizontalLayout_2 = new QHBoxLayout();
+        horizontalLayout_2->setObjectName(QStringLiteral("horizontalLayout_2"));
+        labelDescriptionSdk = new QLabel(AnalyzationDetails);
+        labelDescriptionSdk->setObjectName(QStringLiteral("labelDescriptionSdk"));
+        sizePolicy1.setHeightForWidth(labelDescriptionSdk->sizePolicy().hasHeightForWidth());
+        labelDescriptionSdk->setSizePolicy(sizePolicy1);
+        labelDescriptionSdk->setFont(font1);
+
+        horizontalLayout_2->addWidget(labelDescriptionSdk);
+
+        horizontalSpacer_3 = new QSpacerItem(42, 20, QSizePolicy::Fixed, QSizePolicy::Minimum);
+
+        horizontalLayout_2->addItem(horizontalSpacer_3);
+
+        labelSdkUsed = new QLabel(AnalyzationDetails);
+        labelSdkUsed->setObjectName(QStringLiteral("labelSdkUsed"));
+        sizePolicy.setHeightForWidth(labelSdkUsed->sizePolicy().hasHeightForWidth());
+        labelSdkUsed->setSizePolicy(sizePolicy);
+        labelSdkUsed->setFont(font2);
+
+        horizontalLayout_2->addWidget(labelSdkUsed);
+
+
+        verticalLayout->addLayout(horizontalLayout_2);
+
         verticalSpacer = new QSpacerItem(20, 20, QSizePolicy::Minimum, QSizePolicy::Fixed);
 
         verticalLayout->addItem(verticalSpacer);
@@ -166,6 +195,8 @@ public:
         labelWebsiteName->setText(QString());
         labelDescriptionFlow->setText(QApplication::translate("AnalyzationDetails", "Used Flow:", 0));
         labelFlow->setText(QString());
+        labelDescriptionSdk->setText(QApplication::translate("AnalyzationDetails", "Using SDK:", 0));
+        labelSdkUsed->setText(QString());
     } // retranslateUi
 
 };
