@@ -33,34 +33,40 @@ bool GeneralThreats::clickjackingAttack(QString str_website)
     bool b_isThreat = 0;
 
     // get homepage and authentication/authorization traffic
-    QList<QStringList> lst_clientHomePage = g_sqlHandlerInstance.getClientsIndexPageTraffic(str_website);
-    QList<QStringList> lst_clientLoginPage = g_sqlHandlerInstance.getClientsLoginPageTraffic(str_website);
+    QStringList strlst_clientIndexPage = g_sqlHandlerInstance.getClientIndexPage(str_website);
+    QStringList strlst_clientLoginPage = g_sqlHandlerInstance.getClientLoginPage(str_website);
     QStringList strlst_showFacebookLoginDialog = g_sqlHandlerInstance.onLoginWithFacebookButtonKlicked(str_website);
     QStringList strlst_showPermissionsDialog = g_sqlHandlerInstance.oauthPermissionsDialog(str_website);
     QStringList strlst_clientWebsite = g_sqlHandlerInstance.redirectToClientWebsite(str_website);
 
     QList<QStringList> lst_oauthFlow;
 
-    if(!lst_clientHomePage.isEmpty())
+    // append traffic of all sites belonging to oauth flow
+    if(!strlst_clientIndexPage.isEmpty())
     {
-        // add home page traffic to oauth flow list
-        for(int i=0; i<lst_clientHomePage.size(); i++)
-        {
-            lst_oauthFlow.append(lst_clientHomePage.at(i));
-        }
+        lst_oauthFlow << strlst_clientIndexPage;
     }
 
-    if(!lst_clientLoginPage.isEmpty())
+    if(!strlst_clientLoginPage.isEmpty())
     {
-        // add login site traffic to oauth flow list
-        for(int i=0; i<lst_clientLoginPage.size(); i++)
-        {
-            lst_oauthFlow.append(lst_clientLoginPage.at(i));
-        }
+        lst_oauthFlow << strlst_clientLoginPage;
     }
 
-    // append traffic of all other sites belonging to oauth flow
-    lst_oauthFlow << strlst_showFacebookLoginDialog << strlst_showPermissionsDialog << strlst_clientWebsite;
+    if(!strlst_showFacebookLoginDialog.isEmpty())
+    {
+        lst_oauthFlow << strlst_showFacebookLoginDialog;
+    }
+
+    if(!strlst_showPermissionsDialog.isEmpty())
+    {
+        lst_oauthFlow << strlst_showPermissionsDialog;
+    }
+
+    if(!strlst_clientWebsite.isEmpty())
+    {
+        lst_oauthFlow << strlst_clientWebsite;
+    }
+
 
     bool b_xFrameOptionsFound = 0, b_isXFrameThreat = 0, b_cspFound = 0, b_cspThreat = 0;
     if(!lst_oauthFlow.isEmpty())
@@ -87,7 +93,8 @@ bool GeneralThreats::clickjackingAttack(QString str_website)
                         // check for values deny and sameorigin since those are supported in all browsers
                         int inr_isDeny = QString::compare(str_frameOptionsValue, "DENY", Qt::CaseInsensitive);
                         int inr_isSameorigin = QString::compare(str_frameOptionsValue, "SAMEORIGIN", Qt::CaseInsensitive);
-                        if(inr_isDeny != 0 && inr_isSameorigin != 0)
+                        int inr_isAllowFrom = QString::compare(str_frameOptionsValue, "ALLOW-FROM", Qt::CaseInsensitive);
+                        if(inr_isDeny != 0 && inr_isSameorigin != 0 && inr_isAllowFrom != 0)
                         {
                             b_isXFrameThreat = 1;
                         }
@@ -146,104 +153,109 @@ bool GeneralThreats::loginCsrfAttack(QString str_website)
     QStringList strlst_permissionsDialogResponse = g_sqlHandlerInstance.onAcceptPermissionsInPermissionsDialogKlicked(str_website);
     QStringList strlst_clientWebsite = g_sqlHandlerInstance.followRedirectUri(str_website);
 
-    QString str_stateParam;
-    bool b_stateParamPermissionsDialog = 0, b_stateParamPermissionsResponse = 0, b_stateParamClientRedirect = 0;
-    if(!strlst_showPermissionsDialog.isEmpty())
+    QString str_redirectUri = g_sqlHandlerInstance.getRedirectUri(str_website);
+
+    // check for state param if fb cdc is not used
+    if(!(str_redirectUri.startsWith("https://staticxx.facebook.com") || str_redirectUri.startsWith("http://staticxx.facebook.com")))
     {
-        QString str_permissionsRequestContent = strlst_showPermissionsDialog.at(4);
-        QStringList strlst_checkPermissionsRequestContent = str_permissionsRequestContent.split(" || ");
-
-        for(int i=0; i<strlst_checkPermissionsRequestContent.size(); i++)
+        QString str_stateParam;
+        bool b_stateParamPermissionsDialog = 0, b_stateParamPermissionsResponse = 0, b_stateParamClientRedirect = 0;
+        if(!strlst_showPermissionsDialog.isEmpty())
         {
-            if(strlst_checkPermissionsRequestContent.at(i).startsWith("state"))
+            QString str_permissionsRequestContent = strlst_showPermissionsDialog.at(4);
+            QStringList strlst_checkPermissionsRequestContent = str_permissionsRequestContent.split(" || ");
+
+            for(int i=0; i<strlst_checkPermissionsRequestContent.size(); i++)
             {
-                str_stateParam = strlst_checkPermissionsRequestContent.at(i);
-                str_stateParam = str_stateParam.remove(0, 6).trimmed();
-
-                break;
-            }
-        }
-
-        if(!str_stateParam.isEmpty())
-        {
-            b_stateParamPermissionsDialog = 1;
-        }
-    }
-
-    if(b_stateParamPermissionsDialog)
-    {
-        if(!strlst_permissionsDialogResponse.isEmpty())
-        {
-            QString str_permissionsResponseRequestContent = strlst_permissionsDialogResponse.at(4);
-            QStringList strlst_checkPermissionsResponseRequestContent = str_permissionsResponseRequestContent.split(" || ");
-
-            // check if same state param sent in permissions dialog response
-            for(int i=0; i<strlst_checkPermissionsResponseRequestContent.size(); i++)
-            {
-                if(strlst_checkPermissionsResponseRequestContent.at(i).startsWith("encoded_state"))
+                if(strlst_checkPermissionsRequestContent.at(i).startsWith("state"))
                 {
-                    QString str_checkEncodedStateMatch = strlst_checkPermissionsResponseRequestContent.at(i);
-                    // get encoded state value
-                    str_checkEncodedStateMatch = str_checkEncodedStateMatch.remove(0, 14).trimmed();
+                    str_stateParam = strlst_checkPermissionsRequestContent.at(i);
+                    str_stateParam = str_stateParam.remove(0, 6).trimmed();
 
-                    // encode state param sent with permissions dialog request
-                    QString str_stateParamEncoded = QString::fromLatin1(QUrl::toPercentEncoding(str_stateParam));
-
-                    // check if values are equal
-                    if(str_checkEncodedStateMatch == str_stateParamEncoded)
-                    {
-                        b_stateParamPermissionsResponse = 1;
-
-                        break;
-                    }
-
+                    break;
                 }
             }
 
-        }
-
-        if(!strlst_clientWebsite.isEmpty())
-        {
-            QString str_clientRedirectRequestContent = strlst_clientWebsite.at(4);
-            QStringList strlst_checkClientRedirectRequestContent = str_clientRedirectRequestContent.split(" || ");
-
-            // check if same state param sent with client redirect
-            for(int i=0; i<strlst_checkClientRedirectRequestContent.size(); i++)
+            if(!str_stateParam.isEmpty())
             {
-                if(strlst_checkClientRedirectRequestContent.at(i).startsWith("state"))
-                {
-                    QString str_checkStateMatch = strlst_checkClientRedirectRequestContent.at(i);
-                    // get state value
-                    str_checkStateMatch = str_checkStateMatch.remove(0, 6).trimmed();
-
-                    // check if state values are equal
-                    if(str_checkStateMatch == str_stateParam)
-                    {
-                        b_stateParamClientRedirect = 1;
-
-                        break;
-                    }
-                }
+                b_stateParamPermissionsDialog = 1;
             }
         }
 
-        if(!strlst_showPermissionsDialog.isEmpty() && !strlst_permissionsDialogResponse.isEmpty() && !strlst_clientWebsite.isEmpty())
+        if(b_stateParamPermissionsDialog)
         {
-            if(!(b_stateParamPermissionsDialog && b_stateParamPermissionsResponse && b_stateParamClientRedirect))
+            if(!strlst_permissionsDialogResponse.isEmpty())
+            {
+                QString str_permissionsResponseRequestContent = strlst_permissionsDialogResponse.at(4);
+                QStringList strlst_checkPermissionsResponseRequestContent = str_permissionsResponseRequestContent.split(" || ");
+
+                // check if same state param sent in permissions dialog response
+                for(int i=0; i<strlst_checkPermissionsResponseRequestContent.size(); i++)
+                {
+                    if(strlst_checkPermissionsResponseRequestContent.at(i).startsWith("encoded_state"))
+                    {
+                        QString str_checkEncodedStateMatch = strlst_checkPermissionsResponseRequestContent.at(i);
+                        // get encoded state value
+                        str_checkEncodedStateMatch = str_checkEncodedStateMatch.remove(0, 14).trimmed();
+
+                        // encode state param sent with permissions dialog request
+                        QString str_stateParamEncoded = QString::fromLatin1(QUrl::toPercentEncoding(str_stateParam));
+
+                        // check if values are equal
+                        if(str_checkEncodedStateMatch == str_stateParamEncoded)
+                        {
+                            b_stateParamPermissionsResponse = 1;
+
+                            break;
+                        }
+
+                    }
+                }
+
+            }
+
+            if(!strlst_clientWebsite.isEmpty())
+            {
+                QString str_clientRedirectRequestContent = strlst_clientWebsite.at(4);
+                QStringList strlst_checkClientRedirectRequestContent = str_clientRedirectRequestContent.split(" || ");
+
+                // check if same state param sent with client redirect
+                for(int i=0; i<strlst_checkClientRedirectRequestContent.size(); i++)
+                {
+                    if(strlst_checkClientRedirectRequestContent.at(i).startsWith("state"))
+                    {
+                        QString str_checkStateMatch = strlst_checkClientRedirectRequestContent.at(i);
+                        // get state value
+                        str_checkStateMatch = str_checkStateMatch.remove(0, 6).trimmed();
+
+                        // check if state values are equal
+                        if(str_checkStateMatch == str_stateParam)
+                        {
+                            b_stateParamClientRedirect = 1;
+
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if(!strlst_showPermissionsDialog.isEmpty() && !strlst_permissionsDialogResponse.isEmpty() && !strlst_clientWebsite.isEmpty())
+            {
+                if(!(b_stateParamPermissionsDialog && b_stateParamPermissionsResponse && b_stateParamClientRedirect))
+                {
+                    b_isThreat = 1;
+                }
+            }
+        }
+        else
+        {
+            // check if no state param in permissions dialog was found or if there was no permissions dialog request at all
+            if(!strlst_showPermissionsDialog.isEmpty())
             {
                 b_isThreat = 1;
             }
         }
     }
-    else
-    {
-        // check if no state param in permissions dialog was found or if there was no permissions dialog request at all
-        if(!strlst_showPermissionsDialog.isEmpty())
-        {
-            b_isThreat = 1;
-        }
-    }
-
 
     return b_isThreat;
 }

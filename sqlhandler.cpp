@@ -14,234 +14,164 @@ SqlHandler::SqlHandler()
 
 }
 
+/* get necessary data for oauth traffic queries */
+
 /**
- * This function checks if a RP has saved the access token into a cookie via response header 'Set-Cookie' in unsecured way
+ * This function returns the url of the clients home page
  *
- * @brief SqlHandler::checkSetTokenCookie
+ * @brief SqlHandler::getUrlClientIndex
  * @param str_website
- * @return b_tokenInCookie
+ * @return str_urlclientsIndexPage
+ *         A QString containing the url of the clients homepage or an empty QString if the request was not found
  */
-bool SqlHandler::checkSetTokenCookie(QString str_website)
+QString SqlHandler::getUrlClientIndex(QString str_website)
 {
     // pointer to db
     QSqlDatabase::database();
 
-    bool b_tokenInCookie = false;
-    QString str_tableName = "`FBCTraffic_"+str_website+"_1`";
-    QStringList strlst_accessTokenOrigin = SqlHandler::onAcceptPermissionsInPermissionsDialogKlicked(str_website);
+    QString str_clientsLoginPage = SqlHandler::getRefererOfLoginDialog(str_website);
+    int inr_idFbLoginDialog = SqlHandler::getIdFbLoginDialog(str_website);
 
-    // get access token value
-    if(!strlst_accessTokenOrigin.isEmpty())
-    {
-        QString str_accessTokenOriginResponseContent = strlst_accessTokenOrigin.at(7);
-        QStringList strlst_checkAccessTokenOriginResponseContent = str_accessTokenOriginResponseContent.split(" || ");
-        QString str_accessTokenElementOfResponse = strlst_checkAccessTokenOriginResponseContent.at(7);
-        QStringList strlst_getAccessToken = str_accessTokenElementOfResponse.split('&');
-
-        QString str_accessTokenValue;
-        for(int i=0; i<strlst_getAccessToken.size(); i++)
-        {
-            if(strlst_getAccessToken.at(i).startsWith("access_token", Qt::CaseInsensitive))
-            {
-                str_accessTokenValue = strlst_getAccessToken.at(i);
-                str_accessTokenValue = str_accessTokenValue.remove(0, 13).trimmed();
-            }
-        }
-
-        if(!str_accessTokenValue.isEmpty())
-        {
-            QSqlQuery queryTokenCookie("SELECT response_fields FROM "+str_tableName+" WHERE response_fields LIKE '%"+str_accessTokenValue+"%'");
-
-            QString str_responseFields;
-            while(queryTokenCookie.next())
-            {
-                str_responseFields = queryTokenCookie.value("response_fields").toString();
-
-                if(!str_responseFields.isEmpty())
-                {
-                    QStringList strlst_checkResponseFields = str_responseFields.split(" || ");
-
-                    for(int i=0; i<strlst_checkResponseFields.size(); i++)
-                    {
-                        if(strlst_checkResponseFields.at(i).startsWith("Set-Cookie", Qt::CaseInsensitive))
-                        {
-                            if(strlst_checkResponseFields.contains(str_accessTokenValue) && !(strlst_checkResponseFields.contains("Secure", Qt::CaseInsensitive) || strlst_checkResponseFields.contains("HttpOnly", Qt::CaseInsensitive)))
-                            {
-                                b_tokenInCookie = true;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    return b_tokenInCookie;
-}
-
-/**
- * This function checks if the rp requests an access token cookie (in case cookie was set via JavaScript thus not found in checkSetTokenCookie)
- *
- * @brief SqlHandler::checkTokenCookieRequestHeader
- * @param str_website
- * @return b_tokenInCookie
- */
-bool SqlHandler::checkTokenCookieRequestHeader(QString str_website)
-{
-    // pointer to db
-    QSqlDatabase::database();
-
-    bool b_tokenInCookie = false;
-    QString str_tableName = "`FBCTraffic_"+str_website+"_1`";
-    QStringList strlst_accessTokenOrigin = SqlHandler::onAcceptPermissionsInPermissionsDialogKlicked(str_website);
-
-    // get access token value
-    if(!strlst_accessTokenOrigin.isEmpty())
-    {
-        QString str_accessTokenOriginResponseContent = strlst_accessTokenOrigin.at(7);
-        QStringList strlst_checkAccessTokenOriginResponseContent = str_accessTokenOriginResponseContent.split(" || ");
-        QString str_accessTokenElementOfResponse = strlst_checkAccessTokenOriginResponseContent.at(7);
-        QStringList strlst_getAccessToken = str_accessTokenElementOfResponse.split('&');
-
-        QString str_accessTokenValue;
-        for(int i=0; i<strlst_getAccessToken.size(); i++)
-        {
-            if(strlst_getAccessToken.at(i).startsWith("access_token", Qt::CaseInsensitive))
-            {
-                str_accessTokenValue = strlst_getAccessToken.at(i);
-                str_accessTokenValue = str_accessTokenValue.remove(0, 13).trimmed();
-            }
-        }
-
-        if(!str_accessTokenValue.isEmpty())
-        {
-            QSqlQuery queryTokenCookie("SELECT request_fields FROM "+str_tableName+" WHERE request_fields LIKE '%"+str_accessTokenValue+"%'");
-
-            QString str_requestFields;
-            while(queryTokenCookie.next())
-            {
-                str_requestFields = queryTokenCookie.value("request_fields").toString();
-
-                if(!str_requestFields.isEmpty())
-                {
-                    QStringList strlst_checkRequestFields = str_requestFields.split(" || ");
-
-                    for(int i=0; strlst_checkRequestFields.size(); i++)
-                    {
-                        if(strlst_checkRequestFields.at(i).startsWith("Cookie", Qt::CaseInsensitive))
-                        {
-                            if(strlst_checkRequestFields.at(i).contains(str_accessTokenValue))
-                            {
-                                b_tokenInCookie = true;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    return b_tokenInCookie;
-}
-
-/**
- * This function checks if an rp uses the JavaScript SDK of Facebook
- *
- * @brief SqlHandler::checkSdkUsage
- * @param str_website
- * @return b_sdkUsage
- */
-bool SqlHandler::checkSdkUsage(QString str_website)
-{
-    // pointer to db
-    QSqlDatabase::database();
-
-    QString str_tableName = "`FBCTraffic_"+str_website+"_1`";
-    int inr_permissionsDialogId = SqlHandler::getIdPermissionsDialog(str_website);
-
-    QSqlQuery querySdkCall("SELECT * FROM "+str_tableName+"WHERE (request_method LIKE '%//connect.facebook.net/en_US/sdk.js%' OR request_method LIKE '%//connect.facebook.net/de_DE/sdk.js%') AND id<"+QString::number(inr_permissionsDialogId));
-
-    bool b_sdkUsage=0;
-    while(querySdkCall.next())
-    {
-        b_sdkUsage=1;
-    }
-
-    return b_sdkUsage;
-}
-
-
-/**
- * This function returns the URL of the Facebook login dialog
- *
- * @brief SqlHandler::getUrlLoginDialog
- * @param str_website
- * @return str_loginUrl
- *         A QString containing the login url or an empty QString if the login url was not found
- */
-QString SqlHandler::getUrlLoginDialog(QString str_website)
-{
-    // pointer to db
-    QSqlDatabase::database();
-
-    QString str_loginUrl;
-    int inr_idPermissionsDialog = SqlHandler::getIdPermissionsDialog(str_website);
-
-    if(inr_idPermissionsDialog != 0)
+    QString str_urlClientsIndexPage;
+    if(!str_clientsLoginPage.isEmpty() && inr_idFbLoginDialog != 0)
     {
         QString str_tableName = "`FBCTraffic_"+str_website+"_1`";
 
-        // query url of login dialog
-        QSqlQuery queryLoginUrl("SELECT * FROM "+str_tableName+" WHERE request_method LIKE 'GET https://www.facebook.com/login.php%' AND id<"+QString::number(inr_idPermissionsDialog));
-        // determine login url
-        while(queryLoginUrl.next())
+        // query index url
+        QSqlQuery queryIndex("SELECT * FROM "+str_tableName+" WHERE request_method LIKE '%"+str_clientsLoginPage+"%' AND id<"+QString::number(inr_idFbLoginDialog)+" AND response_method LIKE '<< 2%'");
+        // determine index url by searching for referer
+        while(queryIndex.next())
         {
-            str_loginUrl = queryLoginUrl.value("request_method").toString();
+            QString str_fieldsClientsLoginPage = queryIndex.value("request_fields").toString();
+            QStringList strlst_checkFieldsClientsLoginPage = str_fieldsClientsLoginPage.split(" || ");
 
+            for(int i=0; i<strlst_checkFieldsClientsLoginPage.size(); i++)
+            {
+                if(strlst_checkFieldsClientsLoginPage.at(i).startsWith("referer", Qt::CaseInsensitive))
+                {
+                    str_urlClientsIndexPage = strlst_checkFieldsClientsLoginPage.at(i);
+                }
+            }
         }
 
-        if(!str_loginUrl.isEmpty())
-        {
-            str_loginUrl = str_loginUrl.remove(0, 3).trimmed();
-            int inr_indexEndOfUrl = str_loginUrl.indexOf(' ');
-            str_loginUrl.truncate(inr_indexEndOfUrl);
-        }
+        str_urlClientsIndexPage = str_urlClientsIndexPage.remove(0, 8).trimmed();
     }
 
-    return str_loginUrl;
+    return str_urlClientsIndexPage;
 }
 
+
 /**
- * This function returns the id of the Facebook login dialog
+ * This function returns the request and response of the clients homepage
  *
- * @brief SqlHandler::getIdFbLoginDialog
+ * @brief SqlHandler::getClientIndexPage
  * @param str_website
- * @return inr_idLoginDialog
- *         An integer holding the id of the login dialog request or 0 if the request was not found
+ * @return strlst_trafficClientIndex
+ *         A QStringList holding the request and response concerning the clients homepage or an empty QStringList if no traffic was found
  */
-int SqlHandler::getIdFbLoginDialog(QString str_website)
+QStringList SqlHandler::getClientIndexPage(QString str_website)
 {
     // pointer to db
     QSqlDatabase::database();
 
-    QString str_loginDialogUrl = SqlHandler::getUrlLoginDialog(str_website);
+    QString str_clientsIndexPageUrl = SqlHandler::getUrlClientIndex(str_website);
+    int inr_idClientsLoginPage = SqlHandler::getIdClientLoginPage(str_website);
 
-    int inr_idLoginDialog = 0;
-    if(!str_loginDialogUrl.isEmpty())
+    QString str_id, str_localhostId, str_requestMethod, str_requestFields, str_requestContent, str_responseMethod, str_responseFields, str_responseContent;
+    QString str_tableName = "`FBCTraffic_"+str_website+"_1`";
+
+    QStringList strlst_trafficClientIndex;
+    QStringList strlst_traffic;
+    if(!str_clientsIndexPageUrl.isEmpty() && inr_idClientsLoginPage != 0)
+    {
+
+        QSqlQuery queryTraffic("SELECT * FROM "+str_tableName+" WHERE request_method LIKE '%"+str_clientsIndexPageUrl+"%' AND id<="+QString::number(inr_idClientsLoginPage)+" AND request_fields NOT LIKE '%referer%' AND response_content LIKE '<!DOCTYPE html%'");
+
+        // query traffic
+        while(queryTraffic.next())
+        {
+            str_id = queryTraffic.value("id").toString();
+            str_localhostId = queryTraffic.value("localhost_id").toString();
+            str_requestMethod = queryTraffic.value("request_method").toString();
+            str_requestFields = queryTraffic.value("request_fields").toString();
+            str_requestContent = queryTraffic.value("request_content").toString();
+            str_responseMethod = queryTraffic.value("response_method").toString();
+            str_responseFields = queryTraffic.value("response_fields").toString();
+            str_responseContent = queryTraffic.value("response_content").toString();
+
+            strlst_traffic << str_id << str_localhostId << str_requestMethod << str_requestFields << str_requestContent << str_responseMethod << str_responseFields << str_responseContent;
+
+            // if no result was found make list empty
+            strlst_traffic.removeAll("");
+
+            break;
+        }
+    }
+    else
+    {
+        // if no home page was found through above query -> query clients page name and return first call which is a html web page
+        QSqlQuery queryHomePageByName("SELECT * FROM "+str_tableName+" WHERE request_method LIKE '%"+str_website+"%' AND response_content LIKE '<!DOCTYPE html%'");
+
+        // query home page
+        while(queryHomePageByName.next())
+        {
+            str_id = queryHomePageByName.value("id").toString();
+            str_localhostId = queryHomePageByName.value("localhost_id").toString();
+            str_requestMethod = queryHomePageByName.value("request_method").toString();
+            str_requestFields = queryHomePageByName.value("request_fields").toString();
+            str_requestContent = queryHomePageByName.value("request_content").toString();
+            str_responseMethod = queryHomePageByName.value("response_method").toString();
+            str_responseFields = queryHomePageByName.value("response_fields").toString();
+            str_responseContent = queryHomePageByName.value("response_content").toString();
+
+            strlst_traffic << str_id << str_localhostId << str_requestMethod << str_requestFields << str_requestContent << str_responseMethod << str_responseFields << str_responseContent;
+
+            // if no result was found make list empty
+            strlst_traffic.removeAll("");
+
+            break;
+        }
+    }
+
+    strlst_trafficClientIndex = strlst_traffic;
+
+    return strlst_trafficClientIndex;
+}
+
+
+/**
+ * This function returns the id of the clients login page request/response
+ *
+ * @brief SqlHandler::getIdClientLoginPage
+ * @param str_website
+ * @return inr_idLoginPage
+ *         An integer holding the id of the clients login page or 0 if the request was not found
+ */
+int SqlHandler::getIdClientLoginPage(QString str_website)
+{
+    // pointer to db
+    QSqlDatabase::database();
+
+    QString str_loginPageUrl = SqlHandler::getRefererOfLoginDialog(str_website);
+    int inr_idFbLoginDialog = SqlHandler::getIdFbLoginDialog(str_website);
+
+    int inr_idLoginPage = 0;
+    if(!str_loginPageUrl.isEmpty() && inr_idFbLoginDialog!=0)
     {
         QString str_tableName = "`FBCTraffic_"+str_website+"_1`";
 
         //query id of login dialog
-        QSqlQuery queryId("SELECT * FROM "+str_tableName+" WHERE request_method LIKE '%"+str_loginDialogUrl+"%'");
+        QSqlQuery queryId("SELECT * FROM "+str_tableName+" WHERE request_method LIKE '%"+str_loginPageUrl+"%' AND id<"+QString::number(inr_idFbLoginDialog)+" AND response_method LIKE '<< 2%'");
 
         while(queryId.next())
         {
-            inr_idLoginDialog = queryId.value("id").toInt();
+            inr_idLoginPage = queryId.value("id").toInt();
         }
     }
 
-    return inr_idLoginDialog;
+    return inr_idLoginPage;
 }
+
 
 /**
  * This function returns the referrer of the Facebook login dialog, usually the login page of the clients website
@@ -291,82 +221,157 @@ QString SqlHandler::getRefererOfLoginDialog(QString str_website) // clients logi
     return str_loginReferer;
 }
 
+
 /**
- * This function returns the id of the clients login page request/response
+ * This function returns the request and response on the clients login page
  *
- * @brief SqlHandler::getIdClientLoginPage
+ * @brief SqlHandler::getClientsLoginPage
  * @param str_website
- * @return inr_idLoginPage
- *         An integer holding the id of the clients login page or 0 if the request was not found
+ * @return strlst_clientLoginPage
+ *         A QStringList holding the request and response concerning the clients login page or an empty QStringList if no traffic was found
  */
-int SqlHandler::getIdClientLoginPage(QString str_website)
+QStringList SqlHandler::getClientLoginPage(QString str_website)
 {
     // pointer to db
     QSqlDatabase::database();
 
-    QString str_loginPageUrl = SqlHandler::getRefererOfLoginDialog(str_website);
+    QString str_clientsLoginPageUrl = SqlHandler::getRefererOfLoginDialog(str_website);
     int inr_idFbLoginDialog = SqlHandler::getIdFbLoginDialog(str_website);
 
-    int inr_idLoginPage = 0;
-    if(!str_loginPageUrl.isEmpty() && inr_idFbLoginDialog!=0)
+    QStringList strlst_clientLoginPage;
+    if(!str_clientsLoginPageUrl.isEmpty() && inr_idFbLoginDialog != 0)
+    {
+        QString str_id, str_localhostId, str_requestMethod, str_requestFields, str_requestContent, str_responseMethod, str_responseFields, str_responseContent;
+        QStringList strlst_traffic;
+
+        QString str_tableName = "`FBCTraffic_"+str_website+"_1`";
+
+        QSqlQuery queryTraffic("SELECT * FROM "+str_tableName+" WHERE request_method LIKE '%"+str_clientsLoginPageUrl+"%' AND id<"+QString::number(inr_idFbLoginDialog)+" AND response_method LIKE '<< 2%' AND response_content LIKE '<!DOCTYPE html%'");
+
+        // query traffic
+        while(queryTraffic.next())
+        {
+            str_id = queryTraffic.value("id").toString();
+            str_localhostId = queryTraffic.value("localhost_id").toString();
+            str_requestMethod = queryTraffic.value("request_method").toString();
+            str_requestFields = queryTraffic.value("request_fields").toString();
+            str_requestContent = queryTraffic.value("request_content").toString();
+            str_responseMethod = queryTraffic.value("response_method").toString();
+            str_responseFields = queryTraffic.value("response_fields").toString();
+            str_responseContent = queryTraffic.value("response_content").toString();
+
+            strlst_traffic << str_id << str_localhostId << str_requestMethod << str_requestFields << str_requestContent << str_responseMethod << str_responseFields << str_responseContent;
+
+            // if no result was found make list empty
+            strlst_traffic.removeAll("");
+        }
+        strlst_clientLoginPage = strlst_traffic;
+    }
+
+    return strlst_clientLoginPage;
+}
+
+
+/**
+ * This function returns the id of the Facebook login dialog
+ *
+ * @brief SqlHandler::getIdFbLoginDialog
+ * @param str_website
+ * @return inr_idLoginDialog
+ *         An integer holding the id of the login dialog request or 0 if the request was not found
+ */
+int SqlHandler::getIdFbLoginDialog(QString str_website)
+{
+    // pointer to db
+    QSqlDatabase::database();
+
+    QString str_loginDialogUrl = SqlHandler::getUrlLoginDialog(str_website);
+
+    int inr_idLoginDialog = 0;
+    if(!str_loginDialogUrl.isEmpty())
     {
         QString str_tableName = "`FBCTraffic_"+str_website+"_1`";
 
         //query id of login dialog
-        QSqlQuery queryId("SELECT * FROM "+str_tableName+" WHERE request_method LIKE '%"+str_loginPageUrl+"%' AND id<"+QString::number(inr_idFbLoginDialog)+" AND response_method LIKE '<< 2%'");
+        QSqlQuery queryId("SELECT * FROM "+str_tableName+" WHERE request_method LIKE '%"+str_loginDialogUrl+"%'");
 
         while(queryId.next())
         {
-            inr_idLoginPage = queryId.value("id").toInt();
+            inr_idLoginDialog = queryId.value("id").toInt();
         }
     }
 
-    return inr_idLoginPage;
+    return inr_idLoginDialog;
 }
 
+
 /**
- * This function returns the url of the clients home page
+ * This function returns the URL of the Facebook login dialog
  *
- * @brief SqlHandler::getUrlClientIndex
+ * @brief SqlHandler::getUrlLoginDialog
  * @param str_website
- * @return str_urlclientsIndexPage
- *         A QString containing the url of the clients homepage or an empty QString if the request was not found
+ * @return str_loginUrl
+ *         A QString containing the login url or an empty QString if the login url was not found
  */
-QString SqlHandler::getUrlClientIndex(QString str_website)
+QString SqlHandler::getUrlLoginDialog(QString str_website)
 {
     // pointer to db
     QSqlDatabase::database();
 
-    QString str_clientsLoginPage = SqlHandler::getRefererOfLoginDialog(str_website);
-    int inr_idFbLoginDialog = SqlHandler::getIdFbLoginDialog(str_website);
+    QString str_loginUrl;
+    int inr_idPermissionsDialog = SqlHandler::getIdPermissionsDialog(str_website);
 
-    QString str_urlClientsIndexPage;
-    if(!str_clientsLoginPage.isEmpty() && inr_idFbLoginDialog != 0)
+    if(inr_idPermissionsDialog != 0)
     {
         QString str_tableName = "`FBCTraffic_"+str_website+"_1`";
 
-        // query index url
-        QSqlQuery queryIndex("SELECT * FROM "+str_tableName+" WHERE request_method LIKE '%"+str_clientsLoginPage+"%' AND id<"+QString::number(inr_idFbLoginDialog)+" AND response_method LIKE '<< 2%'");
-        // determine index url by searching for referer
-        while(queryIndex.next())
+        // query url of login dialog
+        QSqlQuery queryLoginUrl("SELECT * FROM "+str_tableName+" WHERE request_method LIKE 'GET https://www.facebook.com/login.php%' AND id<"+QString::number(inr_idPermissionsDialog));
+        // determine login url
+        while(queryLoginUrl.next())
         {
-            QString str_fieldsClientsLoginPage = queryIndex.value("request_fields").toString();
-            QStringList strlst_checkFieldsClientsLoginPage = str_fieldsClientsLoginPage.split(" || ");
+            str_loginUrl = queryLoginUrl.value("request_method").toString();
 
-            for(int i=0; i<strlst_checkFieldsClientsLoginPage.size(); i++)
-            {
-                if(strlst_checkFieldsClientsLoginPage.at(i).startsWith("referer", Qt::CaseInsensitive))
-                {
-                    str_urlClientsIndexPage = strlst_checkFieldsClientsLoginPage.at(i);
-                }
-            }
         }
 
-        str_urlClientsIndexPage = str_urlClientsIndexPage.remove(0, 8).trimmed();
+        if(!str_loginUrl.isEmpty())
+        {
+            str_loginUrl = str_loginUrl.remove(0, 3).trimmed();
+            int inr_indexEndOfUrl = str_loginUrl.indexOf(' ');
+            str_loginUrl.truncate(inr_indexEndOfUrl);
+        }
     }
 
-    return str_urlClientsIndexPage;
+    return str_loginUrl;
 }
+
+
+/**
+ * This function returns the id of the Facebook permission dialog
+ *
+ * @brief SqlHandler::getIdPermissionsDialog
+ * @param str_website
+ * @return inr_idPermissionsDialog
+ */
+int SqlHandler::getIdPermissionsDialog(QString str_website)
+{
+    // pointer to db
+    QSqlDatabase::database();
+
+    int inr_idPermissionsDialog = 0;
+    QString str_tableName = "`FBCTraffic_"+str_website+"_1`";
+
+    QSqlQuery queryPermissionsDialogId("SELECT * FROM "+str_tableName+" WHERE request_method LIKE 'GET https://www.facebook.com/%/dialog/oauth%' AND request_fields LIKE '%referer: https://www.facebook.com/login.php%'");
+
+    // determine permissions dialog url
+    while(queryPermissionsDialogId.next())
+    {
+        inr_idPermissionsDialog = queryPermissionsDialogId.value("id").toInt();
+    }
+
+    return inr_idPermissionsDialog;
+}
+
 
 /**
  * This function returns the URL of the Facebook permissions dialog
@@ -404,69 +409,54 @@ QString SqlHandler::getUrlPermissionsDialog(QString str_website)
     return str_permissionsUrl;
 }
 
-/**
- * This function returns the id of the Facebook permission dialog
- *
- * @brief SqlHandler::getIdPermissionsDialog
- * @param str_website
- * @return inr_idPermissionsDialog
- */
-int SqlHandler::getIdPermissionsDialog(QString str_website)
-{
-    // pointer to db
-    QSqlDatabase::database();
 
-    int inr_idPermissionsDialog = 0;
-    QString str_tableName = "`FBCTraffic_"+str_website+"_1`";
 
-    QSqlQuery queryPermissionsDialogId("SELECT * FROM "+str_tableName+" WHERE request_method LIKE 'GET https://www.facebook.com/%/dialog/oauth%' AND request_fields LIKE '%referer: https://www.facebook.com/login.php%'");
+/* get necessary oauth fields */
 
-    // determine permissions dialog url
-    while(queryPermissionsDialogId.next())
-    {
-        inr_idPermissionsDialog = queryPermissionsDialogId.value("id").toInt();
-    }
-
-    return inr_idPermissionsDialog;
-}
 
 /**
- * This function returns the redirect uri to the clients website after authorization process
+ * This function returns the clients public id
  *
- * @brief SqlHandler::getRedirectUri
+ * @brief SqlHandler::getClientId
  * @param str_website
- * @return str_redirectUri
- *         A QString containing the redirect uri of the client or an empty QString if the request was not found
+ * @return str_clientId
+ *         A QString holding the clients app id or an empty QString if the id was not found
  */
-QString SqlHandler::getRedirectUri(QString str_website)
+QString SqlHandler::getClientId(QString str_website)
 {
     // pointer to db
     QSqlDatabase::database();
 
     QStringList strlst_trafficPermissionsDialog = SqlHandler::oauthPermissionsDialog(str_website);
 
-    QString str_redirectUri;
+    QString str_clientId;
     if(!strlst_trafficPermissionsDialog.isEmpty())
     {
-        QString str_requestContentPermissionsDialog = strlst_trafficPermissionsDialog.at(4);
-        QStringList strlst_checkForRedirectUri = str_requestContentPermissionsDialog.split(" || ");
+        QString str_searchForClientId = strlst_trafficPermissionsDialog.at(4);
+        QStringList strlst_searForClientId = str_searchForClientId.split(" || ");
 
-        // search for redirect uri
-        for(int i=0; i<strlst_checkForRedirectUri.size(); i++)
+        for(int i=0; i<strlst_searForClientId.size(); i++)
         {
-            if(strlst_checkForRedirectUri.at(i).startsWith("redirect_uri", Qt::CaseInsensitive))
+            if(strlst_searForClientId.at(i).startsWith("client_id", Qt::CaseInsensitive) || strlst_searForClientId.at(i).startsWith("app_id", Qt::CaseInsensitive))
             {
-                // filter url
-                str_redirectUri = strlst_checkForRedirectUri.at(i);
-                str_redirectUri = str_redirectUri.remove(0, 13).trimmed();
-
+                str_clientId = strlst_searForClientId.at(i);
                 break;
             }
         }
+
+        if(str_clientId.startsWith("client_id", Qt::CaseInsensitive))
+        {
+            str_clientId = str_clientId.remove(0, 10).trimmed();
+        }
+        else if(str_clientId.startsWith("app_id", Qt::CaseInsensitive))
+        {
+            str_clientId = str_clientId.remove(0, 7).trimmed();
+        }
     }
 
-    return str_redirectUri;
+    return str_clientId;
 }
+
 
 /**
  * This function returns the authorization flow
@@ -521,88 +511,78 @@ QString SqlHandler::getAuthFlow(QString str_website)
     return str_authFlow;
 }
 
+
 /**
- * This function returns the clients public id
+ * This function returns the redirect uri to the clients website after authorization process
  *
- * @brief SqlHandler::getClientId
+ * @brief SqlHandler::getRedirectUri
  * @param str_website
- * @return str_clientId
- *         A QString holding the clients app id or an empty QString if the id was not found
+ * @return str_redirectUri
+ *         A QString containing the redirect uri of the client or an empty QString if the request was not found
  */
-QString SqlHandler::getClientId(QString str_website)
+QString SqlHandler::getRedirectUri(QString str_website)
 {
     // pointer to db
     QSqlDatabase::database();
 
     QStringList strlst_trafficPermissionsDialog = SqlHandler::oauthPermissionsDialog(str_website);
 
-    QString str_clientId;
+    QString str_redirectUri;
     if(!strlst_trafficPermissionsDialog.isEmpty())
     {
-        QString str_searchForClientId = strlst_trafficPermissionsDialog.at(4);
-        QStringList strlst_searForClientId = str_searchForClientId.split(" || ");
+        QString str_requestContentPermissionsDialog = strlst_trafficPermissionsDialog.at(4);
+        QStringList strlst_checkForRedirectUri = str_requestContentPermissionsDialog.split(" || ");
 
-        for(int i=0; i<strlst_searForClientId.size(); i++)
+        // search for redirect uri
+        for(int i=0; i<strlst_checkForRedirectUri.size(); i++)
         {
-            if(strlst_searForClientId.at(i).startsWith("client_id", Qt::CaseInsensitive) || strlst_searForClientId.at(i).startsWith("app_id", Qt::CaseInsensitive))
-            {
-                str_clientId = strlst_searForClientId.at(i);
-                break;
-            }
-        }
-
-        if(str_clientId.startsWith("client_id", Qt::CaseInsensitive))
-        {
-            str_clientId = str_clientId.remove(0, 10).trimmed();
-        }
-        else if(str_clientId.startsWith("app_id", Qt::CaseInsensitive))
-        {
-            str_clientId = str_clientId.remove(0, 7).trimmed();
-        }
-    }
-
-    return str_clientId;
-}
-
-/**
- * This function returns the location where the browser is redirected to in case the clients website needs further authorization means after the Facebook OAuth authorization
- *
- * @brief SqlHandler::getRedirectLocationForPermissionsDialog
- * @param str_website
- * @return str_locationUrl
- *         A QString containing the url in case of a http redirect response from the facebook permissions dialog or an empty QString if the request was not found
- */
-QString SqlHandler::getRedirectLocationForPermissionsDialog(QString str_website)
-{
-    // pointer to db
-    QSqlDatabase::database();
-
-    QStringList strlst_trafficPermissionsDialog = SqlHandler::oauthPermissionsDialog(str_website);
-
-    QString str_locationUrl;
-    if(!strlst_trafficPermissionsDialog.isEmpty())
-    {
-        QString str_checkResponseFields = strlst_trafficPermissionsDialog.at(6);
-        QStringList strlst_checkForLocation = str_checkResponseFields.split(" || ");
-
-        // search for location url
-        for(int i=0; i<strlst_checkForLocation.size(); i++)
-        {
-            if(strlst_checkForLocation.at(i).startsWith("location", Qt::CaseInsensitive))
+            if(strlst_checkForRedirectUri.at(i).startsWith("redirect_uri", Qt::CaseInsensitive))
             {
                 // filter url
-                QString str_checkLocationUrl = strlst_checkForLocation.at(i);
-                str_checkLocationUrl = str_checkLocationUrl.remove(0,10).trimmed();
+                str_redirectUri = strlst_checkForRedirectUri.at(i);
+                str_redirectUri = str_redirectUri.remove(0, 13).trimmed();
 
-                // remove url fragment
-                if(str_checkLocationUrl.contains('#'))
+                break;
+            }
+        }
+    }
+
+    return str_redirectUri;
+}
+
+
+/* check for sdk usage */
+
+/**
+ * This function checks if rp uses php sdk
+ *
+ * @brief SqlHandler::checkPHPSdkUsage
+ * @param str_website
+ * @return b_phpSdkUsage
+ */
+bool SqlHandler::checkPHPSdkUsage(QString str_website)
+{
+    // pointer to db
+    QSqlDatabase::database();
+
+    // sdk information contained in oauth dialog request
+    QStringList strlst_trafficPermissionsDialog = SqlHandler::oauthPermissionsDialog(str_website);
+
+    bool b_phpSdkUsed = 0;
+    if(!strlst_trafficPermissionsDialog.isEmpty()) {
+        QString str_requestContentPermissionsDialog = strlst_trafficPermissionsDialog.at(4);
+        QStringList strlst_checkRequestContentForSdk = str_requestContentPermissionsDialog.split(" || ");
+
+        for(int i=0; i<strlst_checkRequestContentForSdk.size(); i++)
+        {
+            if(strlst_checkRequestContentForSdk.at(i).startsWith("sdk"))
+            {
+                QString str_sdkInfo = strlst_checkRequestContentForSdk.at(i);
+                str_sdkInfo = str_sdkInfo.remove(0, 4).trimmed();
+
+                if(str_sdkInfo.contains("php"))
                 {
-                    int inr_indexFragment = str_checkLocationUrl.indexOf('#');
-                    str_locationUrl = str_checkLocationUrl.left(inr_indexFragment);
-                }
-                else
-                {
-                    str_locationUrl = str_checkLocationUrl;
+                    b_phpSdkUsed = 1;
                 }
 
                 break;
@@ -610,118 +590,53 @@ QString SqlHandler::getRedirectLocationForPermissionsDialog(QString str_website)
         }
     }
 
-    return str_locationUrl;
+    return b_phpSdkUsed;
 }
 
 
 /**
- * This function returns the requests and responses on the clients login page
+ * This function checks if an rp uses the JavaScript SDK of Facebook
+ * NOTE that this will only return rps only using js sdk, not those using a combination of php and js
  *
- * @brief SqlHandler::getClientsLoginPageTraffic
+ * @brief SqlHandler::checkJSSdkUsage
  * @param str_website
- * @return lst_trafficClientLoginPage
- *         A QList of QStringLists holding the traffic concerning the clients login page or an empty QList if no traffic was found
+ * @return b_jsSdkUsage
  */
-QList<QStringList> SqlHandler::getClientsLoginPageTraffic(QString str_website)
+bool SqlHandler::checkJSSdkUsage(QString str_website)
 {
     // pointer to db
     QSqlDatabase::database();
 
-    QString str_clientsLoginPageUrl = SqlHandler::getRefererOfLoginDialog(str_website);
-    int inr_idFbLoginDialog = SqlHandler::getIdFbLoginDialog(str_website);
+    // sdk information included in header when oauth process starts
+    QStringList strlst_trafficPermissionsDialog = SqlHandler::oauthPermissionsDialog(str_website);
 
-    QList<QStringList> lst_trafficClientLoginPage;
-    if(!str_clientsLoginPageUrl.isEmpty() && inr_idFbLoginDialog != 0)
-    {
-        QString str_id, str_localhostId, str_requestMethod, str_requestFields, str_requestContent, str_responseMethod, str_responseFields, str_responseContent;
-        QStringList strlst_traffic;
+    bool b_jsSdkUsed = 0;
+    if(!strlst_trafficPermissionsDialog.isEmpty()) {
+        QString str_requestContentPermissionsDialog = strlst_trafficPermissionsDialog.at(4);
+        QStringList strlst_checkRequestContentForSdk = str_requestContentPermissionsDialog.split(" || ");
 
-        QString str_tableName = "`FBCTraffic_"+str_website+"_1`";
-
-        QSqlQuery queryTraffic("SELECT * FROM "+str_tableName+" WHERE request_method LIKE '%"+str_clientsLoginPageUrl+"%' AND id<"+QString::number(inr_idFbLoginDialog)+" AND response_method LIKE '<< 2%'");
-
-        // query traffic
-        while(queryTraffic.next())
+        for(int i=0; i<strlst_checkRequestContentForSdk.size(); i++)
         {
-            str_id = queryTraffic.value("id").toString();
-            str_localhostId = queryTraffic.value("localhost_id").toString();
-            str_requestMethod = queryTraffic.value("request_method").toString();
-            str_requestFields = queryTraffic.value("request_fields").toString();
-            str_requestContent = queryTraffic.value("request_content").toString();
-            str_responseMethod = queryTraffic.value("response_method").toString();
-            str_responseFields = queryTraffic.value("response_fields").toString();
-            str_responseContent = queryTraffic.value("response_content").toString();
-
-            strlst_traffic << str_id << str_localhostId << str_requestMethod << str_requestFields << str_requestContent << str_responseMethod << str_responseFields << str_responseContent;
-
-            // if no result was found make list empty
-            strlst_traffic.removeAll("");
-
-            if(!strlst_traffic.isEmpty())
+            if(strlst_checkRequestContentForSdk.at(i).startsWith("sdk"))
             {
-                lst_trafficClientLoginPage.append(strlst_traffic);
-                strlst_traffic.clear();
+                QString str_sdkInfo = strlst_checkRequestContentForSdk.at(i);
+                str_sdkInfo = str_sdkInfo.remove(0, 4).trimmed();
+
+                if(str_sdkInfo.contains("joey"))
+                {
+                    b_jsSdkUsed = 1;
+                }
+
+                break;
             }
         }
     }
 
-    return lst_trafficClientLoginPage;
+    return b_jsSdkUsed;
 }
 
-/**
- * This function returns the requests and responses of the clients homepage
- *
- * @brief SqlHandler::getClientsIndexPageTraffic
- * @param str_website
- * @return lst_trafficClientIndexPage
- *         A QList of QStringLists holding the traffic concerning the clients homepage or an empty QList if no traffic was found
- */
-QList<QStringList> SqlHandler::getClientsIndexPageTraffic(QString str_website)
-{
-    // pointer to db
-    QSqlDatabase::database();
 
-    QString str_clientsIndexPageUrl = SqlHandler::getUrlClientIndex(str_website);
-    int inr_idClientsLoginPage = SqlHandler::getIdClientLoginPage(str_website);
-
-    QList<QStringList> lst_trafficClientIndexPage;
-    if(!str_clientsIndexPageUrl.isEmpty() && inr_idClientsLoginPage != 0)
-    {
-        QString str_id, str_localhostId, str_requestMethod, str_requestFields, str_requestContent, str_responseMethod, str_responseFields, str_responseContent;
-        QStringList strlst_traffic;
-
-        QString str_tableName = "`FBCTraffic_"+str_website+"_1`";
-
-        QSqlQuery queryTraffic("SELECT * FROM "+str_tableName+" WHERE request_method LIKE '%"+str_clientsIndexPageUrl+"%' AND id<"+QString::number(inr_idClientsLoginPage)+" AND request_fields NOT LIKE '%referer%'");
-
-        // query traffic
-        while(queryTraffic.next())
-        {
-            str_id = queryTraffic.value("id").toString();
-            str_localhostId = queryTraffic.value("localhost_id").toString();
-            str_requestMethod = queryTraffic.value("request_method").toString();
-            str_requestFields = queryTraffic.value("request_fields").toString();
-            str_requestContent = queryTraffic.value("request_content").toString();
-            str_responseMethod = queryTraffic.value("response_method").toString();
-            str_responseFields = queryTraffic.value("response_fields").toString();
-            str_responseContent = queryTraffic.value("response_content").toString();
-
-            strlst_traffic << str_id << str_localhostId << str_requestMethod << str_requestFields << str_requestContent << str_responseMethod << str_responseFields << str_responseContent;
-
-            // if no result was found make list empty
-            strlst_traffic.removeAll("");
-
-            if(!strlst_traffic.isEmpty())
-            {
-                lst_trafficClientIndexPage.append(strlst_traffic);
-                strlst_traffic.clear();
-            }
-        }
-    }
-
-    return lst_trafficClientIndexPage;
-}
-
+/* trace oauth credentials from their origin */
 
 /**
  * This function returns all requests which contain the access token
@@ -878,6 +793,8 @@ QList<QStringList> SqlHandler::traceAuthorizationCode(QString str_website)
 }
 
 
+/* fb oauth flow */
+
 // 1
 /**
  * This function returns the request and response information for the Facebook login dialog
@@ -995,28 +912,102 @@ QStringList SqlHandler::oauthPermissionsDialog(QString str_website)
 
         QString str_tableName = "`FBCTraffic_"+str_website+"_1`";
 
-        QSqlQuery queryPermissionsDialog("SELECT * FROM "+str_tableName+" WHERE request_method LIKE 'GET https://www.facebook.com/%/dialog/oauth%' AND request_fields LIKE '%referer: "+str_loginUrl+"%'");
+        QSqlQuery queryPermissionsDialog200("SELECT * FROM "+str_tableName+" WHERE request_method LIKE 'GET https://www.facebook.com/%/dialog/oauth%' AND request_fields LIKE '%referer: "+str_loginUrl+"%' AND response_method LIKE '<< 200%'");
 
-        while(queryPermissionsDialog.next())
+        while(queryPermissionsDialog200.next())
         {
-            str_id = queryPermissionsDialog.value("id").toString();
-            str_localhostId = queryPermissionsDialog.value("localhost_id").toString();
-            str_requestMethod = queryPermissionsDialog.value("request_method").toString();
-            str_requestFields = queryPermissionsDialog.value("request_fields").toString();
-            str_requestContent = queryPermissionsDialog.value("request_content").toString();
-            str_responseMethod = queryPermissionsDialog.value("response_method").toString();
-            str_responseFields = queryPermissionsDialog.value("response_fields").toString();
-            str_responseContent = queryPermissionsDialog.value("response_content").toString();
+            str_id = queryPermissionsDialog200.value("id").toString();
+            str_localhostId = queryPermissionsDialog200.value("localhost_id").toString();
+            str_requestMethod = queryPermissionsDialog200.value("request_method").toString();
+            str_requestFields = queryPermissionsDialog200.value("request_fields").toString();
+            str_requestContent = queryPermissionsDialog200.value("request_content").toString();
+            str_responseMethod = queryPermissionsDialog200.value("response_method").toString();
+            str_responseFields = queryPermissionsDialog200.value("response_fields").toString();
+            str_responseContent = queryPermissionsDialog200.value("response_content").toString();
         }
 
         strlst_resultingTraffic << str_id << str_localhostId << str_requestMethod << str_requestFields << str_requestContent << str_responseMethod << str_responseFields << str_responseContent;
 
         // if no result was found return empty list
         strlst_resultingTraffic.removeAll("");
+
+        if(strlst_resultingTraffic.isEmpty())
+        {
+            QSqlQuery queryPermissionsDialog("SELECT * FROM "+str_tableName+" WHERE request_method LIKE 'GET https://www.facebook.com/%/dialog/oauth%' AND request_fields LIKE '%referer: "+str_loginUrl+"%'");
+
+            while(queryPermissionsDialog.next())
+            {
+                str_id = queryPermissionsDialog.value("id").toString();
+                str_localhostId = queryPermissionsDialog.value("localhost_id").toString();
+                str_requestMethod = queryPermissionsDialog.value("request_method").toString();
+                str_requestFields = queryPermissionsDialog.value("request_fields").toString();
+                str_requestContent = queryPermissionsDialog.value("request_content").toString();
+                str_responseMethod = queryPermissionsDialog.value("response_method").toString();
+                str_responseFields = queryPermissionsDialog.value("response_fields").toString();
+                str_responseContent = queryPermissionsDialog.value("response_content").toString();
+            }
+
+            strlst_resultingTraffic << str_id << str_localhostId << str_requestMethod << str_requestFields << str_requestContent << str_responseMethod << str_responseFields << str_responseContent;
+
+            // if no result was found return empty list
+            strlst_resultingTraffic.removeAll("");
+        }
     }
 
     return strlst_resultingTraffic;
 }
+
+
+/**
+ * This function returns the location where the browser is redirected to in case the clients website needs further authorization means after the Facebook OAuth authorization
+ *
+ * @brief SqlHandler::getRedirectLocationForPermissionsDialog
+ * @param str_website
+ * @return str_locationUrl
+ *         A QString containing the url in case of a http redirect response from the facebook permissions dialog or an empty QString if the request was not found
+ */
+QString SqlHandler::getRedirectLocationForPermissionsDialog(QString str_website)
+{
+    // pointer to db
+    QSqlDatabase::database();
+
+    QStringList strlst_trafficPermissionsDialog = SqlHandler::oauthPermissionsDialog(str_website);
+
+    QString str_locationUrl;
+    if(!strlst_trafficPermissionsDialog.isEmpty())
+    {
+        QString str_checkResponseFields = strlst_trafficPermissionsDialog.at(6);
+        QStringList strlst_checkForLocation = str_checkResponseFields.split(" || ");
+
+        // search for location url
+        for(int i=0; i<strlst_checkForLocation.size(); i++)
+        {
+            if(strlst_checkForLocation.at(i).startsWith("location", Qt::CaseInsensitive))
+            {
+                // filter url
+                QString str_checkLocationUrl = strlst_checkForLocation.at(i);
+                str_checkLocationUrl = str_checkLocationUrl.remove(0,10).trimmed();
+
+                // remove url fragment
+                if(str_checkLocationUrl.contains('#'))
+                {
+                    int inr_indexFragment = str_checkLocationUrl.indexOf('#');
+                    str_locationUrl = str_checkLocationUrl.left(inr_indexFragment);
+                }
+                else
+                {
+                    str_locationUrl = str_checkLocationUrl;
+                }
+
+                break;
+            }
+        }
+    }
+
+    return str_locationUrl;
+}
+
+
 
 // 4
 /**
@@ -1063,6 +1054,282 @@ QStringList SqlHandler::onAcceptPermissionsInPermissionsDialogKlicked(QString st
 
     return strlst_resultingTraffic;
 }
+
+
+// 5
+/**
+ * Thsi functon returns the request and response for the redirection to the clients website
+ * Note that here the OAuth credentials code or access token can be found
+ *
+ * @brief SqlHandler::redirectToClientWebsite
+ * @param str_website
+ * @return strlst_resultingTraffic
+ *         A QStringList holding the request to the redirect uri of the client or an empty QStringList if no such request was found
+ */
+QStringList SqlHandler::redirectToClientWebsite(QString str_website)
+{
+    // pointer to db
+    QSqlDatabase::database();
+
+    QString str_tableName, str_id, str_localhostId, str_requestMethod, str_requestFields, str_requestContent, str_responseMethod, str_responseFields, str_responseContent;
+    QStringList strlst_resultingTraffic;
+
+    str_tableName = "`FBCTraffic_"+str_website+"_1`";
+
+    QStringList strlst_trafficPermissionsAccepted = SqlHandler::onAcceptPermissionsInPermissionsDialogKlicked(str_website);
+
+    if(strlst_trafficPermissionsAccepted.isEmpty())
+    {
+        QStringList strlst_trafficPermissionsDialog = SqlHandler::oauthPermissionsDialog(str_website);
+
+        if(!strlst_trafficPermissionsDialog.isEmpty())
+        {
+            QString str_responseMethodPermissionsDialog = strlst_trafficPermissionsDialog.at(5);
+            str_responseMethodPermissionsDialog = str_responseMethodPermissionsDialog.remove(0, 2).trimmed();
+
+            if(str_responseMethodPermissionsDialog.startsWith("3"))
+            {
+                QString str_locationUrl = SqlHandler::getRedirectLocationForPermissionsDialog(str_website);
+                int inr_idPermissionsDialog = SqlHandler::getIdPermissionsDialog(str_website);
+
+                if(!str_locationUrl.isEmpty() && inr_idPermissionsDialog!=0)
+                {
+                    // goto location url
+                    QSqlQuery queryLocation("SELECT * FROM "+str_tableName+" WHERE request_method LIKE '%"+str_locationUrl+"%' AND request_fields LIKE '%referer: https://www.facebook.com%' AND response_content LIKE '<!DOCTYPE html%'");
+
+                    while(queryLocation.next())
+                    {
+                        str_id = queryLocation.value("id").toString();
+                        str_localhostId = queryLocation.value("localhost_id").toString();
+                        str_requestMethod = queryLocation.value("request_method").toString();
+                        str_requestFields = queryLocation.value("request_fields").toString();
+                        str_requestContent = queryLocation.value("request_content").toString();
+                        str_responseMethod = queryLocation.value("response_method").toString();
+                        str_responseFields = queryLocation.value("response_fields").toString();
+                        str_responseContent = queryLocation.value("response_content").toString();
+                    }
+                }
+            }
+            else
+            {
+                QString str_redirectUri = SqlHandler::getRedirectUri(str_website);
+                if(!str_redirectUri.isEmpty())
+                {
+                    int inr_idPermissionsDialog = SqlHandler::getIdPermissionsDialog(str_website);
+
+                    // goto redirect uri
+                    QSqlQuery queryRedirectUri("SELECT * FROM "+str_tableName+" WHERE request_method LIKE '%"+str_redirectUri+"%' AND request_fields LIKE '%referer: https://www.facebook.com%' AND response_method LIKE '<< 200%' AND id>"+QString::number(inr_idPermissionsDialog));
+
+                    if(queryRedirectUri.next())
+                    {
+                        // position query pointer before firs record
+                        queryRedirectUri.seek(-1);
+
+                        while(queryRedirectUri.next())
+                        {
+                            str_id = queryRedirectUri.value("id").toString();
+                            str_localhostId = queryRedirectUri.value("localhost_id").toString();
+                            str_requestMethod = queryRedirectUri.value("request_method").toString();
+                            str_requestFields = queryRedirectUri.value("request_fields").toString();
+                            str_requestContent = queryRedirectUri.value("request_content").toString();
+                            str_responseMethod = queryRedirectUri.value("response_method").toString();
+                            str_responseFields = queryRedirectUri.value("response_fields").toString();
+                            str_responseContent = queryRedirectUri.value("response_content").toString();
+                        }
+                    }
+                    else
+                    {
+                        QSqlQuery queryForRedirectResponse("SELECT * FROM "+str_tableName+" WHERE request_method LIKE '%"+str_redirectUri+"%' AND request_fields LIKE '%referer: https://www.facebook.com%' AND id>"+QString::number(inr_idPermissionsDialog));
+
+                        while(queryForRedirectResponse.next())
+                        {
+                            str_responseFields = queryForRedirectResponse.value("response_fields").toString();
+                        }
+
+                        // search for location url
+                        QStringList strlst_checkResponseFields = str_responseFields.split(" || ");
+                        QString str_locationUrlForRedirect;
+                        for(int i=0; i<strlst_checkResponseFields.size(); i++)
+                        {
+                            if(strlst_checkResponseFields.at(i).startsWith("location", Qt::CaseInsensitive))
+                            {
+                                str_locationUrlForRedirect = strlst_checkResponseFields.at(i);
+                                str_locationUrlForRedirect = str_locationUrlForRedirect.remove(0, 9).trimmed();
+                            }
+                        }
+
+                        // if only location without host is given
+                        if(str_locationUrlForRedirect.startsWith('/'))
+                        {
+                            if(str_locationUrlForRedirect.size() == 1)
+                            {
+                                str_locationUrlForRedirect.append(" ");
+                            }
+
+                            int inr_indexLocSpec = str_redirectUri.indexOf('/', 11);
+                            str_redirectUri.truncate(inr_indexLocSpec);
+
+                            str_redirectUri.append(str_locationUrlForRedirect);
+                        }
+
+                        if(!str_locationUrlForRedirect.isEmpty())
+                        {
+                            QSqlQuery queryLocationForRedirectUri("SELECT * FROM "+str_tableName+" WHERE request_method LIKE '%"+str_locationUrlForRedirect+"%' AND id>"+QString::number(inr_idPermissionsDialog)+" AND response_content LIKE '<!DOCTYPE html%'");
+
+                            while(queryLocationForRedirectUri.next())
+                            {
+                                str_id = queryLocationForRedirectUri.value("id").toString();
+                                str_localhostId = queryLocationForRedirectUri.value("localhost_id").toString();
+                                str_requestMethod = queryLocationForRedirectUri.value("request_method").toString();
+                                str_requestFields = queryLocationForRedirectUri.value("request_fields").toString();
+                                str_requestContent = queryLocationForRedirectUri.value("request_content").toString();
+                                str_responseMethod = queryLocationForRedirectUri.value("response_method").toString();
+                                str_responseFields = queryLocationForRedirectUri.value("response_fields").toString();
+                                str_responseContent = queryLocationForRedirectUri.value("response_content").toString();
+                            }
+                        }
+                    }
+                }
+            }
+
+            strlst_resultingTraffic << str_id << str_localhostId << str_requestMethod << str_requestFields << str_requestContent << str_responseMethod << str_responseFields << str_responseContent;
+
+            // if no result was found return empty list
+            strlst_resultingTraffic.removeAll("");
+        }
+    }
+    else
+    {
+        QString str_redirectUri = SqlHandler::getRedirectUri(str_website);
+
+        QString str_idPermissionsAccepted = strlst_trafficPermissionsAccepted.at(0);
+
+        if(!str_redirectUri.isEmpty())
+        {
+            if(str_redirectUri.startsWith("https://staticxx.facebook.com") || str_redirectUri.startsWith("http://staticxx.facebook.com"))
+            {
+
+                QString str_requestContentPermissionsAccepted = strlst_trafficPermissionsAccepted.at(4);
+                QStringList strlst_requestContentPermissionsAccepted = str_requestContentPermissionsAccepted.split(" || ");
+
+                QString str_domain;
+                for(int i=0; i<strlst_requestContentPermissionsAccepted.size(); i++)
+                {
+                    if(strlst_requestContentPermissionsAccepted.at(i).startsWith("domain", Qt::CaseInsensitive))
+                    {
+                        str_domain = strlst_requestContentPermissionsAccepted.at(i);
+                        str_domain = str_domain.remove(0, 7).trimmed();
+                    }
+                }
+
+                QSqlQuery queryStaticxxRedirect("SELECT * FROM "+str_tableName+" WHERE request_method LIKE '%"+str_website+"%' AND id>"+str_idPermissionsAccepted+" AND (request_fields LIKE '%authority: www."+str_website+"%' OR request_fields LIKE '%Host: www."+str_website+"%' OR request_fields LIKE '%authority: "+str_domain+"%' OR request_fields LIKE '%Host: "+str_domain+"%') AND response_method LIKE '<< 200%'  AND response_content LIKE '<!DOCTYPE html%'");
+
+                while(queryStaticxxRedirect.next())
+                {
+                    str_id = queryStaticxxRedirect.value("id").toString();
+                    str_localhostId = queryStaticxxRedirect.value("localhost_id").toString();
+                    str_requestMethod = queryStaticxxRedirect.value("request_method").toString();
+                    str_requestFields = queryStaticxxRedirect.value("request_fields").toString();
+                    str_requestContent = queryStaticxxRedirect.value("request_content").toString();
+                    str_responseMethod = queryStaticxxRedirect.value("response_method").toString();
+                    str_responseFields = queryStaticxxRedirect.value("response_fields").toString();
+                    str_responseContent = queryStaticxxRedirect.value("response_content").toString();
+
+                    break;
+                }
+            }
+            else
+            {
+
+                if(!str_redirectUri.isEmpty())
+                {
+                    // goto redirect uri
+                    QSqlQuery queryRedirectUri("SELECT * FROM "+str_tableName+" WHERE request_method LIKE '%"+str_redirectUri+"%' AND request_fields LIKE '%referer: https://www.facebook.com%' AND response_method LIKE '<< 200%' AND id>"+str_idPermissionsAccepted);
+
+                    if(queryRedirectUri.next())
+                    {
+                        // position query pointer before firs record
+                        queryRedirectUri.seek(-1);
+
+                        while(queryRedirectUri.next())
+                        {
+                            str_id = queryRedirectUri.value("id").toString();
+                            str_localhostId = queryRedirectUri.value("localhost_id").toString();
+                            str_requestMethod = queryRedirectUri.value("request_method").toString();
+                            str_requestFields = queryRedirectUri.value("request_fields").toString();
+                            str_requestContent = queryRedirectUri.value("request_content").toString();
+                            str_responseMethod = queryRedirectUri.value("response_method").toString();
+                            str_responseFields = queryRedirectUri.value("response_fields").toString();
+                            str_responseContent = queryRedirectUri.value("response_content").toString();
+                        }
+                    }
+                    else
+                    {
+                        QSqlQuery queryForRedirectResponse("SELECT * FROM "+str_tableName+" WHERE request_method LIKE '%"+str_redirectUri+"%' AND request_fields LIKE '%referer: https://www.facebook.com%' AND id>"+str_idPermissionsAccepted);
+                        QString str_responseFields;
+
+                        while(queryForRedirectResponse.next())
+                        {
+                            str_responseFields = queryForRedirectResponse.value("response_fields").toString();
+                        }
+
+                        // search for location url
+                        QStringList strlst_checkResponseFields = str_responseFields.split(" || ");
+                        QString str_locationUrlForRedirect;
+                        for(int i=0; i<strlst_checkResponseFields.size(); i++)
+                        {
+                            if(strlst_checkResponseFields.at(i).startsWith("location", Qt::CaseInsensitive))
+                            {
+                                str_locationUrlForRedirect = strlst_checkResponseFields.at(i);
+                                str_locationUrlForRedirect = str_locationUrlForRedirect.remove(0, 9).trimmed();
+                            }
+                        }
+
+                        // if only location without host is given
+                        if(str_locationUrlForRedirect.startsWith('/'))
+                        {
+                            if(str_locationUrlForRedirect.size() == 1)
+                            {
+                                str_locationUrlForRedirect.append(" ");
+                            }
+
+                            int inr_indexLocSpec = str_redirectUri.indexOf('/', 11);
+                            str_redirectUri.truncate(inr_indexLocSpec);
+
+                            str_redirectUri.append(str_locationUrlForRedirect);
+                        }
+
+                        if(!str_locationUrlForRedirect.isEmpty())
+                        {
+                            QSqlQuery queryLocationForRedirectUri("SELECT * FROM "+str_tableName+" WHERE request_method LIKE '%"+str_locationUrlForRedirect+"%' AND id>"+str_idPermissionsAccepted+" AND response_content LIKE '<!DOCTYPE html%'");
+
+                            while(queryLocationForRedirectUri.next())
+                            {
+                                str_id = queryLocationForRedirectUri.value("id").toString();
+                                str_localhostId = queryLocationForRedirectUri.value("localhost_id").toString();
+                                str_requestMethod = queryLocationForRedirectUri.value("request_method").toString();
+                                str_requestFields = queryLocationForRedirectUri.value("request_fields").toString();
+                                str_requestContent = queryLocationForRedirectUri.value("request_content").toString();
+                                str_responseMethod = queryLocationForRedirectUri.value("response_method").toString();
+                                str_responseFields = queryLocationForRedirectUri.value("response_fields").toString();
+                                str_responseContent = queryLocationForRedirectUri.value("response_content").toString();
+                            }
+                        }
+                    }
+
+                }
+            }
+
+            strlst_resultingTraffic << str_id << str_localhostId << str_requestMethod << str_requestFields << str_requestContent << str_responseMethod << str_responseFields << str_responseContent;
+
+            // if no result was found return empty list
+            strlst_resultingTraffic.removeAll("");
+        }
+    }
+
+    return strlst_resultingTraffic;
+}
+
 
 /**
  * This function returns all request and response pairs for the redirection to the clients website
@@ -1157,193 +1424,7 @@ QStringList SqlHandler::followRedirectUri(QString str_website)
 }
 
 
-// 5
-/**
- * Thsi functon returns the request and response for the redirection to the clients website
- * Note that here the OAuth credentials code or access token can be found
- *
- * @brief SqlHandler::redirectToClientWebsite
- * @param str_website
- * @return strlst_resultingTraffic
- *         A QStringList holding the request to the redirect uri of the client or an empty QStringList if no such request was found
- */
-QStringList SqlHandler::redirectToClientWebsite(QString str_website)
-{
-    // pointer to db
-    QSqlDatabase::database();
-
-    QString str_tableName, str_id, str_localhostId, str_requestMethod, str_requestFields, str_requestContent, str_responseMethod, str_responseFields, str_responseContent;
-    QStringList strlst_resultingTraffic;
-
-    str_tableName = "`FBCTraffic_"+str_website+"_1`";
-
-    QStringList strlst_trafficPermissionsAccepted = SqlHandler::onAcceptPermissionsInPermissionsDialogKlicked(str_website);
-
-    if(strlst_trafficPermissionsAccepted.isEmpty())
-    {
-        QStringList strlst_trafficPermissionsDialog = SqlHandler::oauthPermissionsDialog(str_website);
-
-        if(!strlst_trafficPermissionsDialog.isEmpty())
-        {
-            QString str_responseMethodPermissionsDialog = strlst_trafficPermissionsDialog.at(5);
-            str_responseMethodPermissionsDialog = str_responseMethodPermissionsDialog.remove(0, 2).trimmed();
-
-            if(str_responseMethodPermissionsDialog.startsWith("3"))
-            {
-                QString str_locationUrl = SqlHandler::getRedirectLocationForPermissionsDialog(str_website);
-                int inr_idPermissionsDialog = SqlHandler::getIdPermissionsDialog(str_website);
-
-                if(!str_locationUrl.isEmpty() && inr_idPermissionsDialog!=0)
-                {
-                    // goto location url
-                    QSqlQuery queryLocation("SELECT * FROM "+str_tableName+" WHERE request_method LIKE '%"+str_locationUrl+"%' AND request_fields LIKE '%referer: https://www.facebook.com%' AND response_content LIKE '<!DOCTYPE html%'");
-
-                    while(queryLocation.next())
-                    {
-                        str_id = queryLocation.value("id").toString();
-                        str_localhostId = queryLocation.value("localhost_id").toString();
-                        str_requestMethod = queryLocation.value("request_method").toString();
-                        str_requestFields = queryLocation.value("request_fields").toString();
-                        str_requestContent = queryLocation.value("request_content").toString();
-                        str_responseMethod = queryLocation.value("response_method").toString();
-                        str_responseFields = queryLocation.value("response_fields").toString();
-                        str_responseContent = queryLocation.value("response_content").toString();
-                    }
-
-                    strlst_resultingTraffic << str_id << str_localhostId << str_requestMethod << str_requestFields << str_requestContent << str_responseMethod << str_responseFields << str_responseContent;
-
-                    // if no result was found return empty list
-                    strlst_resultingTraffic.removeAll("");
-                }
-            }
-        }
-    }
-    else
-    {
-        QString str_redirectUri = SqlHandler::getRedirectUri(str_website);
-
-        QString str_idPermissionsAccepted = strlst_trafficPermissionsAccepted.at(0);
-
-        if(!str_redirectUri.isEmpty())
-        {
-            if(str_redirectUri.startsWith("https://staticxx.facebook.com") || str_redirectUri.startsWith("http://staticxx.facebook.com"))
-            {
-
-                QString str_requestContentPermissionsAccepted = strlst_trafficPermissionsAccepted.at(4);
-                QStringList strlst_requestContentPermissionsAccepted = str_requestContentPermissionsAccepted.split(" || ");
-
-                QString str_domain;
-                for(int i=0; i<strlst_requestContentPermissionsAccepted.size(); i++)
-                {
-                    if(strlst_requestContentPermissionsAccepted.at(i).startsWith("domain", Qt::CaseInsensitive))
-                    {
-                        str_domain = strlst_requestContentPermissionsAccepted.at(i);
-                        str_domain = str_domain.remove(0, 7).trimmed();
-                    }
-                }
-
-                QSqlQuery queryStaticxxRedirect("SELECT * FROM "+str_tableName+" WHERE request_method LIKE '%"+str_website+"%' AND id>"+str_idPermissionsAccepted+" AND (request_fields LIKE '%authority: www."+str_website+"%' OR request_fields LIKE '%Host: www."+str_website+"%' OR request_fields LIKE '%authority: "+str_domain+"%' OR request_fields LIKE '%Host: "+str_domain+"%') AND response_method LIKE '<< 200%'  AND response_content LIKE '<!DOCTYPE html%'");
-
-                while(queryStaticxxRedirect.next())
-                {
-                    str_id = queryStaticxxRedirect.value("id").toString();
-                    str_localhostId = queryStaticxxRedirect.value("localhost_id").toString();
-                    str_requestMethod = queryStaticxxRedirect.value("request_method").toString();
-                    str_requestFields = queryStaticxxRedirect.value("request_fields").toString();
-                    str_requestContent = queryStaticxxRedirect.value("request_content").toString();
-                    str_responseMethod = queryStaticxxRedirect.value("response_method").toString();
-                    str_responseFields = queryStaticxxRedirect.value("response_fields").toString();
-                    str_responseContent = queryStaticxxRedirect.value("response_content").toString();
-
-                    break;
-                }
-            }
-            else
-            {
-
-                if(!str_redirectUri.isEmpty())
-                {
-                    // goto redirect uri
-                    QSqlQuery queryRedirectUri("SELECT * FROM "+str_tableName+" WHERE request_method LIKE '%"+str_redirectUri+"%' AND request_fields LIKE '%referer: https://www.facebook.com%' AND response_method LIKE '<< 200%' AND id>"+str_idPermissionsAccepted);
-
-                    if(queryRedirectUri.next())
-                    {
-                        // position query pointer before firs record
-                        queryRedirectUri.seek(-1);
-
-                        while(queryRedirectUri.next())
-                        {
-                            str_id = queryRedirectUri.value("id").toString();
-                            str_localhostId = queryRedirectUri.value("localhost_id").toString();
-                            str_requestMethod = queryRedirectUri.value("request_method").toString();
-                            str_requestFields = queryRedirectUri.value("request_fields").toString();
-                            str_requestContent = queryRedirectUri.value("request_content").toString();
-                            str_responseMethod = queryRedirectUri.value("response_method").toString();
-                            str_responseFields = queryRedirectUri.value("response_fields").toString();
-                            str_responseContent = queryRedirectUri.value("response_content").toString();
-                        }
-                    }
-                    else
-                    {
-                        QSqlQuery queryForRedirectResponse("SELECT * FROM "+str_tableName+" WHERE request_method LIKE '%"+str_redirectUri+"%' AND request_fields LIKE '%referer: https://www.facebook.com%' AND id>"+str_idPermissionsAccepted);
-                        QString str_responseFields;
-
-                        while(queryForRedirectResponse.next())
-                        {
-                            str_responseFields = queryForRedirectResponse.value("response_fields").toString();
-                        }
-
-                        // search for location url
-                        QStringList strlst_checkResponseFields = str_responseFields.split(" || ");
-                        QString str_locationUrlForRedirect;
-                        for(int i=0; i<strlst_checkResponseFields.size(); i++)
-                        {
-                            if(strlst_checkResponseFields.at(i).startsWith("location", Qt::CaseInsensitive))
-                            {
-                                str_locationUrlForRedirect = strlst_checkResponseFields.at(i);
-                                str_locationUrlForRedirect = str_locationUrlForRedirect.remove(0, 9).trimmed();
-                            }
-                        }
-
-                        // if only location without host is given
-                        if(str_locationUrlForRedirect.startsWith('/'))
-                        {
-                            int inr_indexLocSpec = str_redirectUri.indexOf('/', 11);
-                            str_redirectUri.truncate(inr_indexLocSpec);
-
-                            str_redirectUri.append(str_locationUrlForRedirect);
-                        }
-
-                        if(!str_locationUrlForRedirect.isEmpty())
-                        {
-                            QSqlQuery queryLocationForRedirectUri("SELECT * FROM "+str_tableName+" WHERE request_method LIKE '%"+str_locationUrlForRedirect+"%' AND id>"+str_idPermissionsAccepted+" AND response_content LIKE '<!DOCTYPE html%'");
-
-                            while(queryLocationForRedirectUri.next())
-                            {
-                                str_id = queryLocationForRedirectUri.value("id").toString();
-                                str_localhostId = queryLocationForRedirectUri.value("localhost_id").toString();
-                                str_requestMethod = queryLocationForRedirectUri.value("request_method").toString();
-                                str_requestFields = queryLocationForRedirectUri.value("request_fields").toString();
-                                str_requestContent = queryLocationForRedirectUri.value("request_content").toString();
-                                str_responseMethod = queryLocationForRedirectUri.value("response_method").toString();
-                                str_responseFields = queryLocationForRedirectUri.value("response_fields").toString();
-                                str_responseContent = queryLocationForRedirectUri.value("response_content").toString();
-                            }
-                        }
-                    }
-
-                }
-            }
-
-            strlst_resultingTraffic << str_id << str_localhostId << str_requestMethod << str_requestFields << str_requestContent << str_responseMethod << str_responseFields << str_responseContent;
-
-            // if no result was found return empty list
-            strlst_resultingTraffic.removeAll("");
-        }
-    }
-
-    return strlst_resultingTraffic;
-}
+/* error check queries */
 
 /**
  * This function checks if the code is exchanged for an access token on client side
@@ -1439,4 +1520,69 @@ QList<QStringList> SqlHandler::clientApiCalls(QString str_website)
     }
 
     return lst_apiCalls;
+}
+
+/**
+ * This function checks if a RP has saved the access token into a cookie via response header 'Set-Cookie' in unsecured way
+ *
+ * @brief SqlHandler::checkSetTokenCookie
+ * @param str_website
+ * @return b_tokenInCookie
+ */
+bool SqlHandler::checkSetTokenCookie(QString str_website)
+{
+    // pointer to db
+    QSqlDatabase::database();
+
+    bool b_tokenInCookie = false;
+    QString str_tableName = "`FBCTraffic_"+str_website+"_1`";
+    QStringList strlst_accessTokenOrigin = SqlHandler::onAcceptPermissionsInPermissionsDialogKlicked(str_website);
+
+    // get access token value
+    if(!strlst_accessTokenOrigin.isEmpty())
+    {
+        QString str_accessTokenOriginResponseContent = strlst_accessTokenOrigin.at(7);
+        QStringList strlst_checkAccessTokenOriginResponseContent = str_accessTokenOriginResponseContent.split(" || ");
+        QString str_accessTokenElementOfResponse = strlst_checkAccessTokenOriginResponseContent.at(7);
+        QStringList strlst_getAccessToken = str_accessTokenElementOfResponse.split('&');
+
+        QString str_accessTokenValue;
+        for(int i=0; i<strlst_getAccessToken.size(); i++)
+        {
+            if(strlst_getAccessToken.at(i).startsWith("access_token", Qt::CaseInsensitive))
+            {
+                str_accessTokenValue = strlst_getAccessToken.at(i);
+                str_accessTokenValue = str_accessTokenValue.remove(0, 13).trimmed();
+            }
+        }
+
+        if(!str_accessTokenValue.isEmpty())
+        {
+            QSqlQuery queryTokenCookie("SELECT response_fields FROM "+str_tableName+" WHERE response_fields LIKE '%"+str_accessTokenValue+"%'");
+
+            QString str_responseFields;
+            while(queryTokenCookie.next())
+            {
+                str_responseFields = queryTokenCookie.value("response_fields").toString();
+
+                if(!str_responseFields.isEmpty())
+                {
+                    QStringList strlst_checkResponseFields = str_responseFields.split(" || ");
+
+                    for(int i=0; i<strlst_checkResponseFields.size(); i++)
+                    {
+                        if(strlst_checkResponseFields.at(i).startsWith("Set-Cookie", Qt::CaseInsensitive))
+                        {
+                            if(strlst_checkResponseFields.contains(str_accessTokenValue) && !(strlst_checkResponseFields.contains("Secure", Qt::CaseInsensitive) || strlst_checkResponseFields.contains("HttpOnly", Qt::CaseInsensitive)))
+                            {
+                                b_tokenInCookie = true;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    return b_tokenInCookie;
 }

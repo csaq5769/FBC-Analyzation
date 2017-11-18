@@ -69,10 +69,6 @@ QString ThreatsImplicitGrant::accessTokenInCookie(QString str_website)
     {
         str_threat = "Access token set in cookie without secured attributes";
     }
-    else if(g_sqlHandlerInstance.checkTokenCookieRequestHeader(str_website))
-    {
-        str_threat = "Access token found in cookie";
-    }
 
     return str_threat;
 }

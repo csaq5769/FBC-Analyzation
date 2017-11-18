@@ -13,20 +13,20 @@ SOURCES += main.cpp\
     general/generalthreats.cpp \
     code_grant/threatscodegrant.cpp \
     implicit_grant/threatsimplicitgrant.cpp \
-    analyzationdetails.cpp \
-    analyzationstatistics.cpp
+    websitedetails.cpp \
+    statistics.cpp
 
 HEADERS  += analyzetraffic.h \
     sqlhandler.h \
     general/generalthreats.h \
     code_grant/threatscodegrant.h \
     implicit_grant/threatsimplicitgrant.h \
-    analyzationdetails.h \
-    analyzationstatistics.h
+    websitedetails.h \
+    statistics.h
 
 FORMS    += analyzetraffic.ui \
-    analyzationstatistics.ui \
-    analyzationdetails.ui
+    websitedetails.ui \
+    statistics.ui
 
 
 # install

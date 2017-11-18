@@ -1,5 +1,5 @@
-#include "analyzationstatistics.h"
-#include "ui_analyzationstatistics.h"
+#include "statistics.h"
+#include "ui_statistics.h"
 
 #include "code_grant/threatscodegrant.h"
 #include "implicit_grant/threatsimplicitgrant.h"
@@ -17,6 +17,7 @@ AnalyzationStatistics::AnalyzationStatistics(QWidget *parent) :
 {
     ui->setupUi(this);
 
+    // set up website list
     QStringList strlst_websites;
     strlst_websites << "kurier.at" << "karriere.at" << "meinbezirk.at" << "vol.at" << "laola1.at" << "bergfex.at" << "ichkoche.at" << "wogibtswas.at" << "gutekueche.at" << "noen.at" << "oeticket.at" << "krone.at" << "futurezone.at" << "news.at" << "immobilienscout24.at" << "stepstone.at" << "cineplexx.at" << "vienna.at" << "tv-media.at" << "profil.at" << "preisjaeger.at" << "blick.ch" << "digitec.ch" << "local.ch" << "toppreise.ch" << "watson.ch" << "galaxus.ch" << "deindeal.ch" << "aargauerzeitung.ch" << "swissinfo.ch" << "blickamabend.ch" << "holidaycheck.ch" << "ticketcorner.ch" << "jobscout24.at" << "laredoute.ch" << "immostreet.ch" << "cern.ch" << "bild.de" << "spiegel.de" << "welt.de" << "kicker.de" << "computerbild.de" << "giga.de" << "stern.de" << "mydealz.de" << "check24.de" << "gamestar.de" << "dasoertliche.de" << "notebooksbilliger.de" << "markt.de" << "t3n.de" << "moviepilot.de" << "filmstarts.de" << "tvspielfilm.de" << "n24.de" << "rp-online.de" << "dastelefonbuch.de" << "finya.de" << "eventim.de" << "deutsche-wirtschafts-nachrichten.de" << "winfuture.de" << "ladenzeile.de" << "gofeminin.de" << "spielaffe.de" << "kino.de" << "real.de" << "immobilienscout24.de" << "cyberport.de" << "jappy.de" << "aboutyou.de" << "kleiderkreisel.de" << "zalando-lounge.de";
 
@@ -41,6 +42,13 @@ AnalyzationStatistics::~AnalyzationStatistics()
 }
 
 // calculate statistics
+/**
+ * This function calculates overall amount of threats, sdk usage and used flows
+ *
+ * @brief AnalyzationStatistics::calculateStatistics
+ * @param strlst_websites
+ * @return lst_results
+ */
 QList<int> AnalyzationStatistics::calculateStatistics(QStringList strlst_websites)
 {
     // show progress dialog until calculations are done
@@ -52,8 +60,10 @@ QList<int> AnalyzationStatistics::calculateStatistics(QStringList strlst_website
     progressDialog.setMinimumWidth(300);
 
     QList<int> lst_results;
-    int inr_amountClickjacking=0, inr_amountCsrf=0, inr_amountSecretLeak=0, inr_amountTokenEavesdropping=0, inr_amountCodeFlow=0, inr_amountImplicitFlow=0, inr_amountFlowUndetermined=0, inr_amountSdkUsed=0, inr_amountSdkCode=0, inr_amountSdkImplicit=0, inr_amountSdkUndetermined=0;
-    int inr_tokenSetCookie = 0, inr_tokenCookieRequest = 0, inr_totalAmountTokenCookie = 0;
+    int inr_amountClickjacking=0, inr_amountCsrf=0, inr_amountSecretLeak=0, inr_amountTokenEavesdropping=0, inr_amountTokenSetCookie = 0;
+    int inr_amountCodeFlow=0, inr_amountImplicitFlow=0, inr_amountFlowUndetermined=0;
+    int inr_amountJSSdkUsed=0, inr_amountPHPSdkUsed=0;
+
     // check threat, flow and sdk usage for each website
     for(int i=0; i<strlst_websites.size(); i++)
     {
@@ -69,7 +79,7 @@ QList<int> AnalyzationStatistics::calculateStatistics(QStringList strlst_website
            return lst_results;
        }
 
-
+       // get current website name
        QString str_currentWebsite = strlst_websites.at(i);
        str_currentWebsite.chop(3); // removes .tld from string
 
@@ -78,41 +88,14 @@ QList<int> AnalyzationStatistics::calculateStatistics(QStringList strlst_website
        if(str_flow.contains("code", Qt::CaseInsensitive))
        {
            inr_amountCodeFlow++;
-
-           if(g_sqlHandlerInstance.checkSdkUsage(str_currentWebsite))
-           {
-               inr_amountSdkCode++;
-               inr_amountSdkUsed++;
-           }
        }
        else if(str_flow.contains("token", Qt::CaseInsensitive))
        {
            inr_amountImplicitFlow++;
-           if(g_sqlHandlerInstance.checkSdkUsage(str_currentWebsite))
-           {
-               inr_amountSdkImplicit++;
-               inr_amountSdkUsed++;
-           }
        }
        else
        {
            inr_amountFlowUndetermined++;
-           if(g_sqlHandlerInstance.checkSdkUsage(str_currentWebsite))
-           {
-               inr_amountSdkUndetermined++;
-               inr_amountSdkUsed++;
-           }
-       }
-
-       // calculate amount token cookie threats
-       if(g_sqlHandlerInstance.checkSetTokenCookie(str_currentWebsite))
-       {
-           inr_tokenSetCookie++;
-       }
-
-       if(g_sqlHandlerInstance.checkTokenCookieRequestHeader(str_currentWebsite))
-       {
-           inr_tokenCookieRequest++;
        }
 
        // calculate amount clickjacking
@@ -130,31 +113,47 @@ QList<int> AnalyzationStatistics::calculateStatistics(QStringList strlst_website
        // calculate amount token leak
        if(g_threatsImplicitGrantInstance.accessTokenEavesdropping(str_currentWebsite))
            inr_amountTokenEavesdropping++;
+
+       // calculate amount token cookie threats
+       if(g_sqlHandlerInstance.checkSetTokenCookie(str_currentWebsite))
+           inr_amountTokenSetCookie++;
+
+       // check js sdk
+       if(g_sqlHandlerInstance.checkJSSdkUsage(str_currentWebsite))
+           inr_amountJSSdkUsed++;
+
+       // check php sdk
+       if(g_sqlHandlerInstance.checkPHPSdkUsage(str_currentWebsite))
+           inr_amountPHPSdkUsed++;
     }
 
-    // calculate total amount of cookie leaks
-    inr_totalAmountTokenCookie = inr_tokenSetCookie + inr_tokenCookieRequest;
-
-    lst_results << inr_amountClickjacking << inr_amountCsrf << inr_amountSecretLeak << inr_amountTokenEavesdropping << inr_totalAmountTokenCookie << inr_amountCodeFlow << inr_amountImplicitFlow << inr_amountFlowUndetermined << inr_amountSdkUsed << inr_amountSdkCode << inr_amountSdkImplicit << inr_amountSdkUndetermined;
+    lst_results << inr_amountClickjacking << inr_amountCsrf << inr_amountSecretLeak << inr_amountTokenEavesdropping << inr_amountTokenSetCookie << inr_amountCodeFlow << inr_amountImplicitFlow << inr_amountFlowUndetermined << inr_amountJSSdkUsed << inr_amountPHPSdkUsed;
 
     return lst_results;
 }
 
+/**
+ * This function calculates the statistics out of the above calculated results
+ *
+ * @brief AnalyzationStatistics::writeOutStatistics
+ * @param inr_totalAmountWebsites
+ * @param lst_results
+ */
 void AnalyzationStatistics::writeOutStatistics(int inr_totalAmountWebsites, QList<int> lst_results)
 {
     // get results
     int inr_clickjackingThreat=lst_results.at(0), inr_csrfThreat=lst_results.at(1), inr_secretLeakThreat=lst_results.at(2), inr_tokenEavesdroppingLeak=lst_results.at(3), inr_tokenCookie=lst_results.at(4);
     int inr_codeFlow=lst_results.at(5), inr_implicitFlow=lst_results.at(6), inr_undeterminedFlow=lst_results.at(7);
-    int inr_sdkUsed=lst_results.at(8), inr_sdkCode=lst_results.at(9), inr_sdkImplicit=lst_results.at(10), inr_sdkUndetermined=lst_results.at(11);
+    int inr_jsSdkUsed=lst_results.at(8), inr_phpSdkUsed=lst_results.at(9);
 
-    // calculate overall amount of threat precence
+    // calculate overall threat precence
     float f_percentClickjacking=(100*(float)inr_clickjackingThreat)/(float)inr_totalAmountWebsites, f_percentCsrf=(100*(float)inr_csrfThreat)/(float)inr_totalAmountWebsites, f_percentSecretLeak=(100*(float)inr_secretLeakThreat)/(float)inr_totalAmountWebsites, f_percentTokenEavesdropping=(100*(float)inr_tokenEavesdroppingLeak)/(float)inr_totalAmountWebsites, f_percentTokenCookie=(100*(float)inr_tokenCookie)/(float)inr_totalAmountWebsites;
 
-    // calculate overall amount of different flows
+    // calculate overall flows used
     float f_percentCodeFlow=(100*(float)inr_codeFlow)/(float)inr_totalAmountWebsites, f_percentImplicitFlow=(100*(float)inr_implicitFlow)/(float)inr_totalAmountWebsites, f_percentUndeterminedFlow=(100*(float)inr_undeterminedFlow)/(float)inr_totalAmountWebsites;
 
-    // calculate overall amount of sdk usage
-    float f_percentSdkUsed=(100*(float)inr_sdkUsed)/(float)inr_totalAmountWebsites, f_percentSdkCode=(100*(float)inr_sdkCode)/(float)inr_totalAmountWebsites, f_percentSdkImplicit=(100*(float)inr_sdkImplicit)/(float)inr_totalAmountWebsites, f_percentSdkUndetermined=(100*(float)inr_sdkUndetermined)/(float)inr_totalAmountWebsites;
+    // calculate overall sdk usage
+    float f_percentJSSdkUsed=(100*(float)inr_jsSdkUsed)/(float)inr_totalAmountWebsites, f_percentPHPSdkUsed=(100*(float)inr_phpSdkUsed)/(float)inr_totalAmountWebsites;
 
     // write out threat results
     ui->labelStatT1->setText(QString::number(f_percentClickjacking, 'g', 4)+"%");
@@ -169,8 +168,6 @@ void AnalyzationStatistics::writeOutStatistics(int inr_totalAmountWebsites, QLis
     ui->labelFlowUndetermined->setText(QString::number(f_percentUndeterminedFlow, 'g', 4)+"%");
 
     // write out sdk results
-    ui->labelPercentSdk->setText(QString::number(f_percentSdkUsed, 'g', 4)+"%");
-    ui->labelPercentSdkCode->setText(QString::number(f_percentSdkCode, 'g', 4)+"%");
-    ui->labelPercentSdkImplicit->setText(QString::number(f_percentSdkImplicit, 'g', 4)+"%");
-    ui->labelPercentSdkUndetermined->setText(QString::number(f_percentSdkUndetermined, 'g', 4)+"%");
+    ui->labelPercentJSSdk->setText(QString::number(f_percentJSSdkUsed, 'g', 4)+"%");
+    ui->labelPercentPHPSdk->setText(QString::number(f_percentPHPSdkUsed, 'g', 4)+"%");
 }

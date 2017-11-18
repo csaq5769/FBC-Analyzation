@@ -5,8 +5,8 @@
 #include "general/generalthreats.h"
 #include "code_grant/threatscodegrant.h"
 #include "implicit_grant/threatsimplicitgrant.h"
-#include "analyzationdetails.h"
-#include "analyzationstatistics.h"
+#include "websitedetails.h"
+#include "statistics.h"
 
 #include <QtGlobal>
 #include <QDebug>
@@ -22,6 +22,7 @@ Analyzetraffic::Analyzetraffic(QWidget *parent) :
 {
     ui->setupUi(this);    
 
+    // set up website list
     strlst_tlds << "" << ".at" << ".ch" << ".de";
     strlst_atSites << "" << "kurier.at" << "karriere.at" << "meinbezirk.at" << "vol.at" << "laola1.at" << "bergfex.at" << "ichkoche.at" << "wogibtswas.at" << "gutekueche.at" << "noen.at" << "oeticket.at" << "krone.at" << "futurezone.at" << "news.at" << "immobilienscout24.at" << "stepstone.at" << "cineplexx.at" << "vienna.at" << "tv-media.at" << "profil.at" << "preisjaeger.at";
     strlst_chSites << "" << "blick.ch" << "digitec.ch" << "local.ch" << "toppreise.ch" << "watson.ch" << "galaxus.ch" << "deindeal.ch" << "aargauerzeitung.ch" << "swissinfo.ch" << "blickamabend.ch" << "holidaycheck.ch" << "ticketcorner.ch" << "jobscout24.ch" << "laredoute.ch" << "immostreet.ch" << "cern.ch";
@@ -33,12 +34,14 @@ Analyzetraffic::Analyzetraffic(QWidget *parent) :
 
     ui->comboBoxTLD->addItems(strlst_tlds);
 
+    // disable test button is no website is selected
     if(ui->comboBoxTLD->currentText().isEmpty() && ui->comboBoxWebsite->currentText().isEmpty())
     {
         ui->pushButtonReset->setEnabled(false);
         ui->pushButtonTest->setEnabled(false);
     }
 
+    // disable usual table view if no website is selected
     ui->tableWidgetResults->horizontalHeader()->setVisible(false);
 
     // add empty rows and column to table widget
@@ -118,7 +121,12 @@ void Analyzetraffic::on_comboBoxWebsite_activated(const QString &str_value)
     }
 }
 
-
+/**
+ * This function clears the potential threat list if another website is chosen
+ *
+ * @brief Analyzetraffic::on_comboBoxWebsite_currentTextChanged
+ * @param str_newValue
+ */
 void Analyzetraffic::on_comboBoxWebsite_currentTextChanged(const QString &str_newValue /* unused */)
 {
     Q_UNUSED(str_newValue);
@@ -224,6 +232,11 @@ void Analyzetraffic::on_pushButtonTest_clicked()
     }
 }
 
+/**
+ * This function handels call of website details dialog
+ *
+ * @brief Analyzetraffic::on_actionWebsite_Details_triggered
+ */
 void Analyzetraffic::on_actionWebsite_Details_triggered()
 {
     // get website name
@@ -239,6 +252,11 @@ void Analyzetraffic::on_actionWebsite_Details_triggered()
     details->exec();
 }
 
+/**
+ * This function handels call of statistics dialog
+ *
+ * @brief Analyzetraffic::on_actionOverall_Statistics_triggered
+ */
 void Analyzetraffic::on_actionOverall_Statistics_triggered()
 {
     AnalyzationStatistics *statistics = new AnalyzationStatistics(this);

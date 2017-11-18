@@ -1,5 +1,5 @@
-#include "analyzationdetails.h"
-#include "ui_analyzationdetails.h"
+#include "websitedetails.h"
+#include "ui_websitedetails.h"
 
 #include "code_grant/threatscodegrant.h"
 #include "implicit_grant/threatsimplicitgrant.h"
@@ -35,13 +35,22 @@ AnalyzationDetails::AnalyzationDetails(const QString &str_website, const QString
     ui->labelFlow->setText(str_exactFlowDescription);
 
     // write out if sdk is used
-    if(g_sqlHandlerInstance.checkSdkUsage(mstr_websiteName))
+    if(g_sqlHandlerInstance.checkJSSdkUsage(mstr_websiteName))
     {
-        ui->labelSdkUsed->setText("Yes");
+        ui->labelJSSdk->setText("Yes");
     }
     else if(!ui->labelWebsiteName->text().isEmpty())
     {
-        ui->labelSdkUsed->setText("No");
+        ui->labelJSSdk->setText("No");
+    }
+
+    if(g_sqlHandlerInstance.checkPHPSdkUsage(mstr_websiteName))
+    {
+        ui->labelPHPSdk->setText("Yes");
+    }
+    else if(!ui->labelWebsiteName->text().isEmpty())
+    {
+        ui->labelPHPSdk->setText("No");
     }
 }
 
