@@ -1138,7 +1138,7 @@ QStringList SqlHandler::redirectToClientWebsite(QString str_website)
                         }
                     }
                     else
-                    {
+                    {                        
                         QSqlQuery queryForRedirectResponse("SELECT * FROM "+str_tableName+" WHERE request_method LIKE '%"+str_redirectUri+"%' AND request_fields LIKE '%referer: https://www.facebook.com%' AND id>"+QString::number(inr_idPermissionsDialog));
 
                         while(queryForRedirectResponse.next())
@@ -1148,6 +1148,7 @@ QStringList SqlHandler::redirectToClientWebsite(QString str_website)
 
                         // search for location url
                         QStringList strlst_checkResponseFields = str_responseFields.split(" || ");
+                        str_responseFields.clear();
                         QString str_locationUrlForRedirect;
                         for(int i=0; i<strlst_checkResponseFields.size(); i++)
                         {
@@ -1275,6 +1276,7 @@ QStringList SqlHandler::redirectToClientWebsite(QString str_website)
 
                         // search for location url
                         QStringList strlst_checkResponseFields = str_responseFields.split(" || ");
+                        str_responseFields.clear();
                         QString str_locationUrlForRedirect;
                         for(int i=0; i<strlst_checkResponseFields.size(); i++)
                         {
@@ -1320,11 +1322,11 @@ QStringList SqlHandler::redirectToClientWebsite(QString str_website)
                 }
             }
 
-            strlst_resultingTraffic << str_id << str_localhostId << str_requestMethod << str_requestFields << str_requestContent << str_responseMethod << str_responseFields << str_responseContent;
-
-            // if no result was found return empty list
-            strlst_resultingTraffic.removeAll("");
         }
+        strlst_resultingTraffic << str_id << str_localhostId << str_requestMethod << str_requestFields << str_requestContent << str_responseMethod << str_responseFields << str_responseContent;
+
+        // if no result was found return empty list
+        strlst_resultingTraffic.removeAll("");
     }
 
     return strlst_resultingTraffic;

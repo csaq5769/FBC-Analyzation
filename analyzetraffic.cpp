@@ -28,6 +28,8 @@ Analyzetraffic::Analyzetraffic(QWidget *parent) :
     strlst_chSites << "" << "blick.ch" << "digitec.ch" << "local.ch" << "toppreise.ch" << "watson.ch" << "galaxus.ch" << "deindeal.ch" << "aargauerzeitung.ch" << "swissinfo.ch" << "blickamabend.ch" << "holidaycheck.ch" << "ticketcorner.ch" << "jobscout24.ch" << "laredoute.ch" << "immostreet.ch" << "cern.ch";
     strlst_deSites << "" << "bild.de" << "spiegel.de" << "welt.de" << "kicker.de" << "computerbild.de" << "giga.de" << "stern.de" << "mydealz.de" << "check24.de" << "gamestar.de" << "dasoertliche.de" << "notebooksbilliger.de" << "markt.de" << "t3n.de" << "moviepilot.de" << "filmstarts.de" << "tvspielfilm.de" << "n24.de" << "rp-online.de" << "dastelefonbuch.de" << "finya.de" << "eventim.de" << "deutsche-wirtschafts-nachrichten.de" << "winfuture.de" << "ladenzeile.de" << "gofeminin.de" << "spielaffe.de" << "kino.de" << "real.de" << "cyberport.de" << "jappy.de" << "aboutyou.de" << "kleiderkreisel.de" << "zalando-lounge.de";
 
+    qDebug() << "amount of websites: " << strlst_atSites.size()-1+strlst_chSites.size()-1+strlst_deSites.size()-1;
+
     strlst_atSites.sort();
     strlst_chSites.sort();
     strlst_deSites.sort();
