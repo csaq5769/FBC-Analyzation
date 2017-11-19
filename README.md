@@ -1,4 +1,4 @@
-# FBC-Analyzation
+# Facebook-SSO Analysis (FBCScan)
 
 This tool is for usage within the scope of the corresponding thesis only, since appropriate data is restricted to the specified extent of the related thesis.
 
